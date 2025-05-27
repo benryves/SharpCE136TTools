@@ -30,6 +30,9 @@
 			this.printerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.feedPaperToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.cutPaperToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.cassetteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openRecordingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.saveRecordingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.enablePrinterCassetteInterfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.serialPortToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -43,16 +46,28 @@
 			this.savePrintToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.copyPrintToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.savePrintDialog = new System.Windows.Forms.SaveFileDialog();
+			this.statusStrip = new System.Windows.Forms.StatusStrip();
+			this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolStripContainer = new System.Windows.Forms.ToolStripContainer();
+			this.saveCassetteRecordingsDialog = new System.Windows.Forms.SaveFileDialog();
+			this.openCassetteRecordingsDialog = new System.Windows.Forms.OpenFileDialog();
 			this.menuStrip.SuspendLayout();
 			this.paperTray.SuspendLayout();
 			this.printContextMenu.SuspendLayout();
+			this.statusStrip.SuspendLayout();
+			this.toolStripContainer.BottomToolStripPanel.SuspendLayout();
+			this.toolStripContainer.ContentPanel.SuspendLayout();
+			this.toolStripContainer.TopToolStripPanel.SuspendLayout();
+			this.toolStripContainer.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// menuStrip
 			// 
+			this.menuStrip.Dock = System.Windows.Forms.DockStyle.None;
 			this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.printerToolStripMenuItem,
+            this.cassetteToolStripMenuItem,
             this.optionsToolStripMenuItem});
 			this.menuStrip.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip.Name = "menuStrip";
@@ -100,6 +115,31 @@
 			this.cutPaperToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
 			this.cutPaperToolStripMenuItem.Text = "&Cut Paper";
 			this.cutPaperToolStripMenuItem.Click += new System.EventHandler(this.PaperCutToolStripMenuItem_Click);
+			// 
+			// cassetteToolStripMenuItem
+			// 
+			this.cassetteToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openRecordingsToolStripMenuItem,
+            this.saveRecordingsToolStripMenuItem});
+			this.cassetteToolStripMenuItem.Name = "cassetteToolStripMenuItem";
+			this.cassetteToolStripMenuItem.Size = new System.Drawing.Size(63, 20);
+			this.cassetteToolStripMenuItem.Text = "&Cassette";
+			// 
+			// openRecordingsToolStripMenuItem
+			// 
+			this.openRecordingsToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconFolder;
+			this.openRecordingsToolStripMenuItem.Name = "openRecordingsToolStripMenuItem";
+			this.openRecordingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.openRecordingsToolStripMenuItem.Text = "&Open Recordings...";
+			this.openRecordingsToolStripMenuItem.Click += new System.EventHandler(this.OpenRecordingsToolStripMenuItem_Click);
+			// 
+			// saveRecordingsToolStripMenuItem
+			// 
+			this.saveRecordingsToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconDisk;
+			this.saveRecordingsToolStripMenuItem.Name = "saveRecordingsToolStripMenuItem";
+			this.saveRecordingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.saveRecordingsToolStripMenuItem.Text = "&Save Recordings...";
+			this.saveRecordingsToolStripMenuItem.Click += new System.EventHandler(this.SaveRecordingsToolStripMenuItem_Click);
 			// 
 			// optionsToolStripMenuItem
 			// 
@@ -161,19 +201,19 @@
 			this.paperTray.BackColor = System.Drawing.SystemColors.ControlDark;
 			this.paperTray.Controls.Add(this.paper);
 			this.paperTray.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.paperTray.Location = new System.Drawing.Point(0, 24);
+			this.paperTray.Location = new System.Drawing.Point(0, 0);
 			this.paperTray.Name = "paperTray";
 			this.paperTray.Padding = new System.Windows.Forms.Padding(16, 16, 0, 0);
-			this.paperTray.Size = new System.Drawing.Size(473, 303);
+			this.paperTray.Size = new System.Drawing.Size(490, 281);
 			this.paperTray.TabIndex = 2;
 			this.paperTray.Resize += new System.EventHandler(this.PaperTray_Resize);
 			// 
 			// paperScrollBar
 			// 
 			this.paperScrollBar.Dock = System.Windows.Forms.DockStyle.Right;
-			this.paperScrollBar.Location = new System.Drawing.Point(473, 24);
+			this.paperScrollBar.Location = new System.Drawing.Point(473, 0);
 			this.paperScrollBar.Name = "paperScrollBar";
-			this.paperScrollBar.Size = new System.Drawing.Size(17, 303);
+			this.paperScrollBar.Size = new System.Drawing.Size(17, 281);
 			this.paperScrollBar.TabIndex = 2;
 			this.paperScrollBar.Scroll += new System.Windows.Forms.ScrollEventHandler(this.PaperScrollBar_Scroll);
 			// 
@@ -187,15 +227,17 @@
 			// 
 			// savePrintToolStripMenuItem
 			// 
+			this.savePrintToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconDisk;
 			this.savePrintToolStripMenuItem.Name = "savePrintToolStripMenuItem";
-			this.savePrintToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.savePrintToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
 			this.savePrintToolStripMenuItem.Text = "&Save Image...";
 			this.savePrintToolStripMenuItem.Click += new System.EventHandler(this.SavePrintToolStripMenuItem_Click);
 			// 
 			// copyPrintToolStripMenuItem
 			// 
+			this.copyPrintToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconPageCopy;
 			this.copyPrintToolStripMenuItem.Name = "copyPrintToolStripMenuItem";
-			this.copyPrintToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.copyPrintToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
 			this.copyPrintToolStripMenuItem.Text = "&Copy Image";
 			this.copyPrintToolStripMenuItem.Click += new System.EventHandler(this.CopyPrintToolStripMenuItem_Click);
 			// 
@@ -203,14 +245,61 @@
 			// 
 			this.savePrintDialog.Filter = "PNG (*.png)|*.png|GIF (*.gif)|*.gif|Bitmap (*.bmp)|*.bmp";
 			// 
+			// statusStrip
+			// 
+			this.statusStrip.Dock = System.Windows.Forms.DockStyle.None;
+			this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusLabel});
+			this.statusStrip.Location = new System.Drawing.Point(0, 0);
+			this.statusStrip.Name = "statusStrip";
+			this.statusStrip.Size = new System.Drawing.Size(490, 22);
+			this.statusStrip.TabIndex = 3;
+			this.statusStrip.Text = "statusStrip1";
+			// 
+			// statusLabel
+			// 
+			this.statusLabel.Image = global::Sharp.CE50P.Properties.Resources.IconDisconnect;
+			this.statusLabel.Name = "statusLabel";
+			this.statusLabel.Size = new System.Drawing.Size(95, 17);
+			this.statusLabel.Text = "Disconnected";
+			// 
+			// toolStripContainer
+			// 
+			// 
+			// toolStripContainer.BottomToolStripPanel
+			// 
+			this.toolStripContainer.BottomToolStripPanel.Controls.Add(this.statusStrip);
+			// 
+			// toolStripContainer.ContentPanel
+			// 
+			this.toolStripContainer.ContentPanel.Controls.Add(this.paperScrollBar);
+			this.toolStripContainer.ContentPanel.Controls.Add(this.paperTray);
+			this.toolStripContainer.ContentPanel.Size = new System.Drawing.Size(490, 281);
+			this.toolStripContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.toolStripContainer.Location = new System.Drawing.Point(0, 0);
+			this.toolStripContainer.Name = "toolStripContainer";
+			this.toolStripContainer.Size = new System.Drawing.Size(490, 327);
+			this.toolStripContainer.TabIndex = 4;
+			this.toolStripContainer.Text = "toolStripContainer1";
+			// 
+			// toolStripContainer.TopToolStripPanel
+			// 
+			this.toolStripContainer.TopToolStripPanel.Controls.Add(this.menuStrip);
+			// 
+			// saveCassetteRecordingsDialog
+			// 
+			this.saveCassetteRecordingsDialog.Filter = "Cassette Recordings (*.tap)|*.tap";
+			// 
+			// openCassetteRecordingsDialog
+			// 
+			this.openCassetteRecordingsDialog.Filter = "Cassette Recordings (*.tap)|*.tap";
+			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(490, 327);
-			this.Controls.Add(this.paperTray);
-			this.Controls.Add(this.paperScrollBar);
-			this.Controls.Add(this.menuStrip);
+			this.Controls.Add(this.toolStripContainer);
 			this.MainMenuStrip = this.menuStrip;
 			this.MinimumSize = new System.Drawing.Size(420, 320);
 			this.Name = "Main";
@@ -221,8 +310,16 @@
 			this.menuStrip.PerformLayout();
 			this.paperTray.ResumeLayout(false);
 			this.printContextMenu.ResumeLayout(false);
+			this.statusStrip.ResumeLayout(false);
+			this.statusStrip.PerformLayout();
+			this.toolStripContainer.BottomToolStripPanel.ResumeLayout(false);
+			this.toolStripContainer.BottomToolStripPanel.PerformLayout();
+			this.toolStripContainer.ContentPanel.ResumeLayout(false);
+			this.toolStripContainer.TopToolStripPanel.ResumeLayout(false);
+			this.toolStripContainer.TopToolStripPanel.PerformLayout();
+			this.toolStripContainer.ResumeLayout(false);
+			this.toolStripContainer.PerformLayout();
 			this.ResumeLayout(false);
-			this.PerformLayout();
 
 		}
 
@@ -247,6 +344,14 @@
 		private System.Windows.Forms.ToolStripMenuItem copyPrintToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem savePrintToolStripMenuItem;
 		private System.Windows.Forms.SaveFileDialog savePrintDialog;
+		private System.Windows.Forms.StatusStrip statusStrip;
+		private System.Windows.Forms.ToolStripContainer toolStripContainer;
+		private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+		private System.Windows.Forms.ToolStripMenuItem cassetteToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem openRecordingsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem saveRecordingsToolStripMenuItem;
+		private System.Windows.Forms.SaveFileDialog saveCassetteRecordingsDialog;
+		private System.Windows.Forms.OpenFileDialog openCassetteRecordingsDialog;
 	}
 }
 

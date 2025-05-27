@@ -58,6 +58,8 @@ namespace Sharp.CE50P {
 		/// <param name="serialPortName">The name of the serial port to use.</param>
 		/// <returns><c>true</c> if the interface was switched on successfully, <c>false</c> otherwise.</returns>
 		private bool SwitchOnInterface(string serialPortName) {
+			// Ensure the status is appropriate set to start with.
+			UpdateStatus();
 			if (backgroundWorker.IsBusy) {
 				// Background worker is still running...
 				return false;
@@ -67,10 +69,12 @@ namespace Sharp.CE50P {
 				return false;
 			} else if (!PaBus.Open(serialPortName)) {
 				// There is a serial port in the settings, but it couldn't be selected.
+				UpdateStatus();
 				MessageBox.Show(this, string.Format("Could not use serial port '{0}'.", serialPortName), Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return false;
 			} else {
 				// All good!
+				UpdateStatus();
 				backgroundWorker.RunWorkerAsync();
 				return true;
 			}
@@ -81,6 +85,7 @@ namespace Sharp.CE50P {
 		/// </summary>
 		private void SwitchOffInterface() {
 			PaBus.Close();
+			UpdateStatus();
 			backgroundWorker.CancelAsync();
 		}
 
@@ -169,13 +174,64 @@ namespace Sharp.CE50P {
 
 		#endregion
 
+		#region Cassette menu
+
+		private void SaveRecordingsToolStripMenuItem_Click(object sender, EventArgs e) {
+
+			// What are we saving?
+			var blocks = this.tapeBlocks.ToArray();
+			if (blocks.Length < 1) {
+				MessageBox.Show(this, "There are no recordings to save.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+				return;
+			}
+
+			// Save all of the blocks
+			bool saving;
+			do {
+				if (saving = (saveCassetteRecordingsDialog.ShowDialog(this) == DialogResult.OK)) {
+					try {
+						using (var cassette = File.Create(saveCassetteRecordingsDialog.FileName)) {
+							foreach (var block in blocks) {
+								block.WriteToStream(cassette);
+							}
+						}
+						saving = false;
+					} catch (Exception ex) {
+						saving = MessageBox.Show(this, string.Format("Could not save file: {0}", ex.Message), Application.ProductName, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error) == DialogResult.Retry;
+					}
+				}
+			} while (saving);
+		}
+
+		private void OpenRecordingsToolStripMenuItem_Click(object sender, EventArgs e) {
+
+			bool loading;
+			do {
+				if (loading = (openCassetteRecordingsDialog.ShowDialog(this) == DialogResult.OK)) {
+					try {
+						// Load all of the blocks
+						var blocks = new List<TapeBlock>();
+						using (var cassette = File.OpenRead(openCassetteRecordingsDialog.FileName)) {
+							while (cassette.Position < cassette.Length) {
+								blocks.Add(TapeBlock.FromStream(cassette));
+							}
+						}
+						loading = false;
+						// Success!
+						this.tapeBlocks.Clear();
+						foreach (var block in blocks) this.tapeBlocks.Enqueue(block);
+					} catch (Exception ex) {
+						loading = MessageBox.Show(this, string.Format("Could not load file: {0}", ex.Message), Application.ProductName, MessageBoxButtons.RetryCancel, MessageBoxIcon.Error) == DialogResult.Retry;
+					}
+				}
+			} while (loading);
+		}
+
+		#endregion
+
 		#region Protocol handler
 
 		private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e) {
-
-			byte[] cassetteHeader = new byte[130];
-			byte[] cassetteData = new byte[64 * 1024 + 2];
-			ushort cassetteDataSize;
 
 			int idleLoops = 0;
 
@@ -205,6 +261,7 @@ namespace Sharp.CE50P {
 						case 0x59:
 							Debug.WriteLine("<- 0x59 [Printer row]");
 							var row = new byte[128];
+							Invoke(new MethodInvoker(PrinterPrintingRow));
 							length = PaBus.ReadBytes(row, 128);
 							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
 							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
@@ -218,39 +275,117 @@ namespace Sharp.CE50P {
 							break;
 						case 0x44:
 							Debug.WriteLine("<- 0x44 [Save to cassette]");
-							length = PaBus.ReadBytes(cassetteHeader, 130);
+							Invoke(new MethodInvoker(CassetteRecordingBlock));
+							// Read the information
+							var cassetteInfo = new byte[130];
+							length = PaBus.ReadBytes(cassetteInfo, (uint)cassetteInfo.Length);
 							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
-							cassetteDataSize = (ushort)((cassetteHeader[18] << 8) | (cassetteHeader[19] << 0));
-							length = PaBus.ReadBytes(cassetteData, (uint)(cassetteDataSize + 2));
+							// Read the data
+							ushort cassetteDataSize = (ushort)((cassetteInfo[18] << 8) | (cassetteInfo[19] << 0));
+							var cassetteData = new byte[cassetteDataSize + 2];
+							length = PaBus.ReadBytes(cassetteData, (uint)cassetteData.Length);
 							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
 							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
 							PaBus.End();
+							// Build the tape block
+							var recordBlock = TapeBlock.FromBytesWithChecksum(cassetteInfo, cassetteData);
+							Invoke(new Action<TapeBlock>(CassetteRecordedBlock), recordBlock);
+							break;
+						case 0x33:
+							Debug.WriteLine("<- 0x33 [Load from cassette]");
+							// Get the 18-byte request (not sure what this is?)
+							var tapeLoadRequest = new byte[18];
+							if (PaBus.ReadBytes(tapeLoadRequest, (uint)tapeLoadRequest.Length) != tapeLoadRequest.Length) {
+								PaBus.End();
+							} else {
+								// Display the request and acknowledge.
+								Debug.Write(string.Format("<- [{0:D} bytes]:", tapeLoadRequest.Length));
+								foreach (var b in tapeLoadRequest) Debug.Write(string.Format(" 0x{0:X2}", b));
+								Debug.WriteLine("");
+								if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
+								// Do we have any tape data to load?
+								if (this.tapeBlocks.Count > 0) {
+									var playBlock = this.tapeBlocks.Dequeue();
+									var playData = TapeBlock.GetBytesWithChecksum(playBlock.Info);
+									Debug.WriteLine(string.Format("-> [Info: {0:D} bytes]", playData.Length));
+									if (PaBus.WriteBytes(playData, (uint)playData.Length) != playData.Length) {
+										// Couldn't write
+										PaBus.End();
+									} else if (!PaBus.ReadByte(out byte playDataInfoAck) || playDataInfoAck != 0xFA) {
+										// Didn't get ACK
+										PaBus.End();
+									} else {
+										playData = TapeBlock.GetBytesWithChecksum(playBlock.Data);
+										Debug.WriteLine(string.Format("-> [Data: {0:D} bytes]", playData.Length));
+										if (PaBus.WriteBytes(playData, (uint)playData.Length) == playData.Length) {
+											// We have success!
+											Debug.WriteLine("-> Load from cassette success!");
+										}
+										PaBus.End();
+									}
+								}
+							}
 							break;
 						default:
 							Debug.WriteLine(string.Format("<- 0x{0:X2} [???]", value));
 							PaBus.End();
 							break;
 					}
-				} else if (idleLoops > 10) {
-					Thread.Sleep(10);
 				} else {
-					idleLoops++;
+					if (idleLoops > 10) {
+						// Clear any active status
+						var statusChanged = false;
+						if (isPrinting) {
+							isPrinting = false;
+							statusChanged = true;
+						}
+						if (isRecording) {
+							isRecording = false;
+							statusChanged = true;
+						}
+						if (isPlaying) {
+							isPlaying = false;
+							statusChanged = true;
+						}
+						if (statusChanged) {
+							Invoke(new MethodInvoker(UpdateStatus));
+						}
+						Thread.Sleep(10);
+					} else {
+						idleLoops++;
+					}
 				}
 			}
 
 		}
 
+		#endregion
+
+		#region Printer handling
+
 		private readonly List<byte[]> printerRows = new List<byte[]>(8);
 
 		private void PrinterStartedJob() {
+			isPrinting = true;
+			isPlaying = isRecording = false;
 			printerRows.Clear();
 			if (paper.Controls.Count > 0 && paper.Controls[paper.Controls.Count - 1] is PictureBox pictureBox && pictureBox.Image != null) {
 				FeedPaper(1);
 			}
+			UpdateStatus();
+		}
+
+		private void PrinterPrintingRow() {
+			isPrinting = true;
+			isPlaying = isRecording = false;
+			UpdateStatus();
 		}
 
 		private void PrinterPrintedRow(byte[] data) {
+			isPrinting = true;
+			isPlaying = isRecording = false;
 			printerRows.Add(data);
+			UpdateStatus();
 			if (Properties.Settings.Default.PrintImmediately) PrinterFinishedJob();
 		}
 
@@ -271,6 +406,9 @@ namespace Sharp.CE50P {
 				printerRows.Clear();
 				AppendBitmapToPaper(printBmp);
 			}
+
+			isPrinting = isPlaying = isRecording = false;
+			UpdateStatus();
 		}
 
 		private void FeedPaper(int rows) {
@@ -300,7 +438,7 @@ namespace Sharp.CE50P {
 			paper.Height += rows * 16;
 
 			ScrollPaperToBottom();
-			
+
 		}
 
 		private void Separator_Paint(object sender, PaintEventArgs e) {
@@ -337,6 +475,51 @@ namespace Sharp.CE50P {
 				e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
 				e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
 				e.Graphics.DrawImage(pictureBox.Image, 0, 0, pictureBox.Width, pictureBox.Height);
+			}
+		}
+
+		#endregion
+
+		#region Cassette handling
+
+		private readonly Queue<TapeBlock> tapeBlocks = new Queue<TapeBlock>();
+
+		private void CassetteRecordingBlock() {
+			isRecording = true;
+			isPlaying = isPrinting = false;
+			UpdateStatus();
+		}
+
+		private void CassetteRecordedBlock(TapeBlock block) {
+			tapeBlocks.Enqueue(block);
+			isRecording = isPlaying = isPrinting = false;
+			UpdateStatus();
+		}
+
+		#endregion
+
+		#region Status
+
+		private bool isPrinting = false;
+		private bool isRecording = false;
+		private bool isPlaying = false;
+
+		private void UpdateStatus() {
+			if (!PaBus.IsOpen()) {
+				statusLabel.Text = "Disconnected";
+				statusLabel.Image = Properties.Resources.IconDisconnect;
+			} else if (isPrinting) {
+				statusLabel.Text = "Printing";
+				statusLabel.Image = Properties.Resources.IconPrinter;
+			} else if (isRecording) {
+				statusLabel.Text = "Recording";
+				statusLabel.Image = Properties.Resources.IconCassetteRecord;
+			} else if (isPlaying) {
+				statusLabel.Text = "Playing";
+				statusLabel.Image = Properties.Resources.IconCassettePlay;
+			} else {
+				statusLabel.Text = "Ready";
+				statusLabel.Image = Properties.Resources.IconConnect;
 			}
 		}
 
@@ -526,8 +709,8 @@ namespace Sharp.CE50P {
 			}
 		}
 
-		#endregion
 
+		#endregion
 
 	}
 }
