@@ -254,9 +254,11 @@ namespace Sharp.CE50P {
 							break;
 						case 0xC0:
 							Debug.WriteLine("<- 0xC0 [Printer Init]");
+							// Report that a print job has been started
+							Invoke(new MethodInvoker(PrinterStartedJob));
+							// Acknowledge
 							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
 							PaBus.End();
-							Invoke(new MethodInvoker(PrinterStartedJob));
 							break;
 						case 0x59:
 							Debug.WriteLine("<- 0x59 [Printer row]");
@@ -264,17 +266,22 @@ namespace Sharp.CE50P {
 							Invoke(new MethodInvoker(PrinterPrintingRow));
 							length = PaBus.ReadBytes(row, 128);
 							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
-							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
+							// Report that a row has been printed
 							Invoke(new Action<byte[]>(PrinterPrintedRow), row);
+							// Acknowledge
+							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
 							break;
 						case 0x70:
 							Debug.WriteLine("<- 0x70 [End print]");
+							// Report that the job has finished
+							Invoke(new MethodInvoker(PrinterFinishedJob));
+							// Acknowledge
 							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
 							PaBus.End();
-							Invoke(new MethodInvoker(PrinterFinishedJob));
 							break;
 						case 0x44:
 							Debug.WriteLine("<- 0x44 [Save to cassette]");
+							// Report that the recording has started
 							Invoke(new MethodInvoker(CassetteRecordingBlock));
 							// Read the information
 							var cassetteInfo = new byte[130];
@@ -285,11 +292,13 @@ namespace Sharp.CE50P {
 							var cassetteData = new byte[cassetteDataSize + 2];
 							length = PaBus.ReadBytes(cassetteData, (uint)cassetteData.Length);
 							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
+							// Build the tape block
+							TapeBlock recordBlock = TapeBlock.FromBytesWithChecksum(cassetteInfo, cassetteData);
+							// Report that we've received the tape block
+							Invoke(new Action<TapeBlock>(CassetteRecordedBlock), recordBlock);
+							// Acknowledge
 							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
 							PaBus.End();
-							// Build the tape block
-							var recordBlock = TapeBlock.FromBytesWithChecksum(cassetteInfo, cassetteData);
-							Invoke(new Action<TapeBlock>(CassetteRecordedBlock), recordBlock);
 							break;
 						case 0x33:
 							Debug.WriteLine("<- 0x33 [Load from cassette]");
