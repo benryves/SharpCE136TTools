@@ -46,16 +46,23 @@ BOOL paBusEnd(void) {
 
 	// Wait for the line to go back low naturally
 	paBusResetTimeout(40000);
-	while (paBusGetSI() && !paBusTimedOut());
+	while (paBusGetSI()) {
+		if (paBusTimedOut()) return FALSE;
+	}
+
+	// We're definitely no longer reading now
+	paBusReading = FALSE;
 
 	// Drive our end of the line low
 	paBusSetSO(0);
 
 	// Ensure the bus has gone back idle
 	paBusResetTimeout(40000);
-	while (paBusGetSI() && !paBusTimedOut());
-
-	paBusReading = FALSE;
+	while (paBusGetSI()) {
+		if (paBusTimedOut()) return FALSE;
+	}
+	
+	// We're definitely no longer writing now
 	paBusWriting = FALSE;
 
 	return TRUE;
