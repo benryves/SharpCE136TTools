@@ -12,6 +12,9 @@ using System.Threading;
 using System.Windows.Forms;
 
 namespace Sharp.CE50P {
+
+	public delegate TResult Func<out TResult>();
+
 	public partial class Main : Form {
 
 		#region Startup
@@ -307,32 +310,37 @@ namespace Sharp.CE50P {
 							if (PaBus.ReadBytes(tapeLoadRequest, (uint)tapeLoadRequest.Length) != tapeLoadRequest.Length) {
 								PaBus.End();
 							} else {
-								// Display the request and acknowledge.
+								// Display the request
 								Debug.Write(string.Format("<- [{0:D} bytes]:", tapeLoadRequest.Length));
 								foreach (var b in tapeLoadRequest) Debug.Write(string.Format(" 0x{0:X2}", b));
 								Debug.WriteLine("");
-								if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
-								// Do we have any tape data to load?
-								if (this.tapeBlocks.Count > 0) {
-									var playBlock = this.tapeBlocks.Dequeue();
+								
+								// Try to load the block to play back
+								if (Invoke(new Func<TapeBlock>(CassettePlayingBlock)) is TapeBlock playBlock) {
+
 									var playData = TapeBlock.GetBytesWithChecksum(playBlock.Info);
+
 									Debug.WriteLine(string.Format("-> [Info: {0:D} bytes]", playData.Length));
+
+									// Acknowledge the load request
+									if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
+
+									// Start sending data
 									if (PaBus.WriteBytes(playData, (uint)playData.Length) != playData.Length) {
 										// Couldn't write
-										PaBus.End();
 									} else if (!PaBus.ReadByte(out byte playDataInfoAck) || playDataInfoAck != 0xFA) {
 										// Didn't get ACK
-										PaBus.End();
 									} else {
 										playData = TapeBlock.GetBytesWithChecksum(playBlock.Data);
 										Debug.WriteLine(string.Format("-> [Data: {0:D} bytes]", playData.Length));
 										if (PaBus.WriteBytes(playData, (uint)playData.Length) == playData.Length) {
 											// We have success!
+											Invoke(new Action<TapeBlock>(CassettePlayedBlock), playBlock);
 											Debug.WriteLine("-> Load from cassette success!");
 										}
-										PaBus.End();
 									}
 								}
+								PaBus.End();
 							}
 							break;
 						default:
@@ -503,6 +511,31 @@ namespace Sharp.CE50P {
 			tapeBlocks.Enqueue(block);
 			isRecording = isPlaying = isPrinting = false;
 			UpdateStatus();
+		}
+
+		private TapeBlock CassettePlayingBlock() {
+
+			// Persuade the user to open a tape file.
+			if (this.tapeBlocks.Count < 1) {
+				this.openRecordingsToolStripMenuItem.PerformClick();
+			}
+
+			if (this.tapeBlocks.Count > 0) {
+				// We have a tape block to play.
+				isPlaying = true;
+				isRecording = isPrinting = false;
+				UpdateStatus();
+				return this.tapeBlocks.Dequeue();
+			} else {
+				// We don't have any tape blocks to play.
+				isPlaying = isRecording = isPrinting = false;
+				UpdateStatus();
+				return null;
+			}
+		}
+
+		private void CassettePlayedBlock(TapeBlock block) {
+			// Advance to the next block?
 		}
 
 		#endregion
