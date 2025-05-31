@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Sharp.CE50P {
 	
@@ -24,17 +25,24 @@ namespace Sharp.CE50P {
 		private byte[] data = new byte[0];
 
 		/// <summary>
-		/// Gets or sets the size of the data in the block as referenced in the info block.
+		/// Gets the size of the data in the block as referenced in the info block.
 		/// </summary>
 		public ushort InfoDataSize {
 			get {
 				return (ushort)((info[18] << 8) | (info[19] << 0));
 			}
-			set {
-				info[18] = (byte)(value >> 8);
-				info[19] = (byte)(value >> 0);
+		}
+
+		/// <summary>
+		/// Gets the name of the file stored on the tape in the info block.
+		/// </summary>
+		/// <remarks>This is the name entered when a user loads or saves a file from their device and may not match the name of any files stored within the tape's data.</remarks>
+		public string InfoName {
+			get {
+				return Encoding.ASCII.GetString(info, 1, 8).TrimEnd();
 			}
 		}
+
 		/// <summary>
 		/// The data contained within the block.
 		/// </summary>

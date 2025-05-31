@@ -188,6 +188,21 @@ namespace Sharp.CE50P {
 				return;
 			}
 
+			// Is there a suitable default filename?
+			string filename = null;
+			foreach (var block in tapeBlocks) {
+				if (filename == null) {
+					filename = block.InfoName;
+				} else if (filename != block.InfoName) {
+					filename = null;
+					break;
+				}
+			}
+
+			if (filename != null) {
+				saveCassetteRecordingsDialog.FileName = filename + ".tap";
+			}
+
 			// Save all of the blocks
 			bool saving;
 			do {
