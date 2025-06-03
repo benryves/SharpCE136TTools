@@ -134,8 +134,9 @@ readTimedOut:
 
 }
 
-DWORD paBusReadBytes(BYTE *buffer, DWORD length) {
+DWORD paBusReadBytes(BYTE *buffer, DWORD offset, DWORD length) {
 	BYTE value;
+	buffer += offset;
 	for (DWORD i = 0; i < length; ++i) {
 		if (paBusReadByte(&value)) {
 			*buffer++ = value;
@@ -204,7 +205,8 @@ writeTimedOut:
 
 }
 
-DWORD paBusWriteBytes(BYTE *buffer, DWORD length) {
+DWORD paBusWriteBytes(BYTE *buffer, DWORD offset, DWORD length) {
+	buffer += offset;
 	for (DWORD i = 0; i < length; ++i) {
 		if (!paBusWriteByte(*buffer++)) {
 			return i;

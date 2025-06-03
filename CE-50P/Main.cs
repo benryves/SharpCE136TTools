@@ -47,6 +47,10 @@ namespace Sharp.CE50P {
 
 		#region Interface enabling/disabling
 
+		PaBusStream paBusStream;
+		BinaryReader paBusReader;
+		BinaryWriter paBusWriter;
+
 		/// <summary>
 		/// Switch on the virtual printer/cassette interface using the serial port name stored in the settings.
 		/// </summary>
@@ -70,26 +74,36 @@ namespace Sharp.CE50P {
 				// We haven't selected a valid serial port yet.
 				MessageBox.Show(this, "Please select a serial port from the options menu.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
 				return false;
-			} else if (!PaBus.Open(serialPortName)) {
+			}
+
+			try {
+				// Open the stream and connect a reader and writer to it.
+				paBusStream = new PaBusStream(serialPortName);
+				paBusReader = new BinaryReader(paBusStream);
+				paBusWriter = new BinaryWriter(paBusStream);
+			} catch (Exception ex) {
 				// There is a serial port in the settings, but it couldn't be selected.
 				UpdateStatus();
-				MessageBox.Show(this, string.Format("Could not use serial port '{0}'.", serialPortName), Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(this, string.Format("Could not use serial port '{0}': {1}", serialPortName, ex.Message), Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return false;
-			} else {
-				// All good!
-				UpdateStatus();
-				backgroundWorker.RunWorkerAsync();
-				return true;
 			}
+			// All good!
+			UpdateStatus();
+			backgroundWorker.RunWorkerAsync();
+			return true;
 		}
 
 		/// <summary>
 		/// Switch off the virtual printer/cassette interface.
 		/// </summary>
 		private void SwitchOffInterface() {
-			PaBus.Close();
+			if (backgroundWorker.IsBusy) backgroundWorker.CancelAsync();
+			paBusStream?.Close();
+			paBusStream?.Dispose();
 			UpdateStatus();
-			backgroundWorker.CancelAsync();
+			paBusStream = null;
+			paBusReader = null;
+			paBusWriter = null;
 		}
 
 		/// <summary>
@@ -253,7 +267,6 @@ namespace Sharp.CE50P {
 
 			int idleLoops = 0;
 
-			uint length;
 			for (; ; ) {
 
 				if (backgroundWorker.CancellationPending) {
@@ -262,105 +275,98 @@ namespace Sharp.CE50P {
 				}
 
 				if (PaBus.ReadByte(out byte value)) {
+					
 					idleLoops = 0;
+
 					switch (value) {
 						case 0xAA:
 						case 0xA5:
-							Debug.WriteLine("<- 0xAA [Identify]");
-							if (PaBus.WriteByte(0xF0)) Debug.WriteLine("-> 0xF0");
-							if (PaBus.WriteByte(0x01)) Debug.WriteLine("-> 0x01");
+							Debug.WriteLine(string.Format("<- 0x{0:X2} [Identify]", value));
+							paBusWriter.Write((ushort)0x01F0);
 							break;
 						case 0xC0:
 							Debug.WriteLine("<- 0xC0 [Printer Init]");
 							// Report that a print job has been started
 							Invoke(new MethodInvoker(PrinterStartedJob));
 							// Acknowledge
-							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
-							PaBus.End();
+							paBusStream.WriteAcknowledgement();
+							paBusStream.Flush();
 							break;
 						case 0x59:
 							Debug.WriteLine("<- 0x59 [Printer row]");
-							var row = new byte[128];
 							Invoke(new MethodInvoker(PrinterPrintingRow));
-							length = PaBus.ReadBytes(row, 128);
-							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
+							// Fetch 128 bytes of row data
+							var row = paBusReader.ReadBytes(128);
 							// Report that a row has been printed
 							Invoke(new Action<byte[]>(PrinterPrintedRow), row);
 							// Acknowledge
-							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
+							paBusStream.WriteAcknowledgement();
 							break;
 						case 0x70:
 							Debug.WriteLine("<- 0x70 [End print]");
 							// Report that the job has finished
 							Invoke(new MethodInvoker(PrinterFinishedJob));
 							// Acknowledge
-							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
-							PaBus.End();
+							paBusStream.WriteAcknowledgement();
+							paBusStream.Flush();
 							break;
 						case 0x44:
 							Debug.WriteLine("<- 0x44 [Save to cassette]");
 							// Report that the recording has started
 							Invoke(new MethodInvoker(CassetteRecordingBlock));
 							// Read the information
-							var cassetteInfo = new byte[130];
-							length = PaBus.ReadBytes(cassetteInfo, (uint)cassetteInfo.Length);
-							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
+							var cassetteInfo = paBusReader.ReadBytes(130);
 							// Read the data
 							ushort cassetteDataSize = (ushort)((cassetteInfo[18] << 8) | (cassetteInfo[19] << 0));
-							var cassetteData = new byte[cassetteDataSize + 2];
-							length = PaBus.ReadBytes(cassetteData, (uint)cassetteData.Length);
-							Debug.WriteLine(string.Format("<- [{0:D} bytes]", length));
+							var cassetteData = paBusReader.ReadBytes(cassetteDataSize + 2);
 							// Build the tape block
 							TapeBlock recordBlock = TapeBlock.FromBytesWithChecksum(cassetteInfo, cassetteData);
 							// Report that we've received the tape block
 							Invoke(new Action<TapeBlock>(CassetteRecordedBlock), recordBlock);
 							// Acknowledge
-							if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
-							PaBus.End();
+							paBusStream.WriteAcknowledgement();
+							paBusStream.Flush();
 							break;
 						case 0x33:
 							Debug.WriteLine("<- 0x33 [Load from cassette]");
 							// Get the 18-byte request (not sure what this is?)
-							var tapeLoadRequest = new byte[18];
-							if (PaBus.ReadBytes(tapeLoadRequest, (uint)tapeLoadRequest.Length) != tapeLoadRequest.Length) {
-								PaBus.End();
-							} else {
-								// Display the request
-								Debug.Write(string.Format("<- [{0:D} bytes]:", tapeLoadRequest.Length));
-								foreach (var b in tapeLoadRequest) Debug.Write(string.Format(" 0x{0:X2}", b));
-								Debug.WriteLine("");
-								
-								// Try to load the block to play back
-								if (Invoke(new Func<TapeBlock>(CassettePlayingBlock)) is TapeBlock playBlock) {
+							var tapeLoadRequest = paBusReader.ReadBytes(18);
+							
+							// Display the request
+							Debug.Write(string.Format("<- [{0:D} bytes]:", tapeLoadRequest.Length));
+							foreach (var b in tapeLoadRequest) Debug.Write(string.Format(" 0x{0:X2}", b));
+							Debug.WriteLine("");
 
-									var playData = TapeBlock.GetBytesWithChecksum(playBlock.Info);
+							// Try to load the block to play back
+							if (Invoke(new Func<TapeBlock>(CassettePlayingBlock)) is TapeBlock playBlock) {
 
-									Debug.WriteLine(string.Format("-> [Info: {0:D} bytes]", playData.Length));
+								var playData = TapeBlock.GetBytesWithChecksum(playBlock.Info);
 
-									// Acknowledge the load request
-									if (PaBus.WriteByte(0xFA)) Debug.WriteLine("-> 0xFA");
+								Debug.WriteLine(string.Format("-> [Info: {0:D} bytes]", playData.Length));
 
-									// Start sending data
-									if (PaBus.WriteBytes(playData, (uint)playData.Length) != playData.Length) {
-										// Couldn't write
-									} else if (!PaBus.ReadByte(out byte playDataInfoAck) || playDataInfoAck != 0xFA) {
-										// Didn't get ACK
-									} else {
-										playData = TapeBlock.GetBytesWithChecksum(playBlock.Data);
-										Debug.WriteLine(string.Format("-> [Data: {0:D} bytes]", playData.Length));
-										if (PaBus.WriteBytes(playData, (uint)playData.Length) == playData.Length) {
-											// We have success!
-											Invoke(new Action<TapeBlock>(CassettePlayedBlock), playBlock);
-											Debug.WriteLine("-> Load from cassette success!");
-										}
-									}
-								}
-								PaBus.End();
+								// Acknowledge the load request
+								paBusStream.WriteAcknowledgement();
+
+								// Start sending data
+								paBusWriter.Write(playData);
+
+								paBusStream.ReadAcknowledgement();
+
+								playData = TapeBlock.GetBytesWithChecksum(playBlock.Data);
+								Debug.WriteLine(string.Format("-> [Data: {0:D} bytes]", playData.Length));
+
+								paBusWriter.Write(playData);
+
+								// We have success!
+								Invoke(new Action<TapeBlock>(CassettePlayedBlock), playBlock);
+								Debug.WriteLine("-> Load from cassette success!");
+
 							}
+							paBusStream.Flush();
 							break;
 						default:
 							Debug.WriteLine(string.Format("<- 0x{0:X2} [???]", value));
-							PaBus.End();
+							paBusStream.Flush();
 							break;
 					}
 				} else {
@@ -389,6 +395,22 @@ namespace Sharp.CE50P {
 				}
 			}
 
+		}
+
+		private void BackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
+			// Can't do much if we've been disposed.
+			if (IsDisposed) return;
+			// Switch the interface off.
+			SwitchOffInterface();
+			// Update the status.
+			isPrinting = isPlaying = isRecording = false;
+			Invoke(new MethodInvoker(UpdateStatus));
+			// Was it intentionally cancelled?
+			if (e.Cancelled) return;
+			// No, so there was some sort of problem.
+			MessageBox.Show(e.Error == null ? "There was a problem." : e.Error.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			// Start the background worker again.
+			SwitchOnInterface();
 		}
 
 		#endregion
@@ -765,7 +787,6 @@ namespace Sharp.CE50P {
 				}
 			}
 		}
-
 
 		#endregion
 

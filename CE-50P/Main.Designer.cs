@@ -129,7 +129,7 @@
 			// 
 			this.openRecordingsToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconFolder;
 			this.openRecordingsToolStripMenuItem.Name = "openRecordingsToolStripMenuItem";
-			this.openRecordingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.openRecordingsToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
 			this.openRecordingsToolStripMenuItem.Text = "&Open Recordings...";
 			this.openRecordingsToolStripMenuItem.Click += new System.EventHandler(this.OpenRecordingsToolStripMenuItem_Click);
 			// 
@@ -137,7 +137,7 @@
 			// 
 			this.saveRecordingsToolStripMenuItem.Image = global::Sharp.CE50P.Properties.Resources.IconDisk;
 			this.saveRecordingsToolStripMenuItem.Name = "saveRecordingsToolStripMenuItem";
-			this.saveRecordingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.saveRecordingsToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
 			this.saveRecordingsToolStripMenuItem.Text = "&Save Recordings...";
 			this.saveRecordingsToolStripMenuItem.Click += new System.EventHandler(this.SaveRecordingsToolStripMenuItem_Click);
 			// 
@@ -183,6 +183,7 @@
 			this.backgroundWorker.WorkerReportsProgress = true;
 			this.backgroundWorker.WorkerSupportsCancellation = true;
 			this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.BackgroundWorker_DoWork);
+			this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.BackgroundWorker_RunWorkerCompleted);
 			// 
 			// paper
 			// 
