@@ -147,6 +147,55 @@ DWORD paBusReadBytes(BYTE *buffer, DWORD offset, DWORD length) {
 	return length;
 }
 
+BOOL paBusReadAcknowledgedBytes(BYTE *buffer, DWORD offset, DWORD length, BOOL acknowledged, DWORD timeout) {
+
+	LARGE_INTEGER currentTime = { 0, };
+	LARGE_INTEGER endTime = { 0, };
+	DWORD read = 1;
+
+	// Read all of the data we need to
+	while (length > 0) {
+
+		// Recalculate the end time if we've read any data
+		if (read > 0) {
+			QueryPerformanceCounter(&endTime);
+			endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+		}
+
+		// Try to write some data
+		read = paBusReadBytes(buffer, offset, length);
+		if (read > 0) {
+			// Advance pointers and length counters
+			length -= read;
+			offset += read;
+		} else {
+			// Check to see if we've timed out
+			QueryPerformanceCounter(&currentTime);
+			if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+		}
+	}
+
+	// Is that it?
+	if (!acknowledged) return TRUE;
+
+	// If we get this far, we must try to send an acknowledgement
+
+	// Reset the timeout
+	QueryPerformanceCounter(&endTime);
+	endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+
+	// Try to retrieve the acknowledgement
+	while (!paBusWriteByte(0xFA)) {
+		// Check to see if we've timed out
+		QueryPerformanceCounter(&currentTime);
+		if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+	}
+
+	// All good
+	return TRUE;
+
+}
+
 BOOL paBusWriteByte(BYTE value) {
 
 	// Check port is open
@@ -213,6 +262,55 @@ DWORD paBusWriteBytes(BYTE *buffer, DWORD offset, DWORD length) {
 		}
 	}
 	return length;
+}
+
+BOOL paBusWriteAcknowledgedBytes(BYTE *buffer, DWORD offset, DWORD length, BOOL acknowledged, DWORD timeout) {
+
+	LARGE_INTEGER currentTime = { 0, };
+	LARGE_INTEGER endTime = { 0, };
+	DWORD written = 1;
+	BYTE ack = 0xFA;
+
+	// Write all of the data we need to
+	while (length > 0) {
+
+		// Recalculate the end time if we've written any data
+		if (written > 0) {
+			QueryPerformanceCounter(&endTime);
+			endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+		}
+
+		// Try to write some data
+		written = paBusWriteBytes(buffer, offset, length);
+		if (written > 0) {
+			// Advance pointers and length counters
+			length -= written;
+			offset += written;
+		} else {
+			// Check to see if we've timed out
+			QueryPerformanceCounter(&currentTime);
+			if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+		}
+	}
+
+	// Is that it?
+	if (!acknowledged) return TRUE;
+
+	// If we get this far, we must try to get an acknowledgement
+	
+	// Reset the timeout
+	QueryPerformanceCounter(&endTime);
+	endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+
+	// Try to retrieve the acknowledgement
+	while (!paBusReadByte(&ack)) {
+		// Check to see if we've timed out
+		QueryPerformanceCounter(&currentTime);
+		if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+	}
+
+	// Verify the acknowledgement value matches
+	return ack == 0xFA;
 }
 
 void paBusClose(void) {

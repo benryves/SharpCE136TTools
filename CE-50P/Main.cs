@@ -274,7 +274,7 @@ namespace Sharp.CE50P {
 					return;
 				}
 
-				if (PaBus.ReadByte(out byte value)) {
+				if (PaBus.Read(out byte value)) {
 					
 					idleLoops = 0;
 

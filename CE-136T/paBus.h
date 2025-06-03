@@ -11,8 +11,10 @@ __declspec(dllexport) void paBusDelay(DWORD microseconds);
 
 __declspec(dllexport) BOOL paBusReadByte(BYTE *value);
 __declspec(dllexport) DWORD paBusReadBytes(BYTE *buffer, DWORD offset, DWORD length);
+__declspec(dllexport) BOOL paBusReadAcknowledgedBytes(BYTE *buffer, DWORD offset, DWORD length, BOOL acknowledged, DWORD timeout);
 
 __declspec(dllexport) BOOL paBusWriteByte(BYTE value);
 __declspec(dllexport) DWORD paBusWriteBytes(BYTE *buffer, DWORD offset, DWORD length);
+__declspec(dllexport) BOOL paBusWriteAcknowledgedBytes(BYTE *buffer, DWORD offset, DWORD length, BOOL acknowledged, DWORD timeout);
 
 __declspec(dllexport) BOOL paBusEnd(void);
