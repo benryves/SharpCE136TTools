@@ -8,6 +8,9 @@ LARGE_INTEGER qpTimeout = { 0, };
 BOOL paBusReading = FALSE;
 BOOL paBusWriting = FALSE;
 
+DWORD paBusReadDelay = 0;
+DWORD paBusWriteDelay = 0;
+
 static void paBusResetTimeout(DWORD microseconds) {
 	LARGE_INTEGER qpCurrent = { 0, };
 	QueryPerformanceCounter(&qpCurrent);
@@ -106,7 +109,7 @@ BOOL paBusReadByte(BYTE *value) {
 		paBusSetSO(0);
 
 		// Sampling delay
-		paBusDelay(300);
+		paBusDelay(300 - (paBusReadDelay + paBusWriteDelay));
 
 		// Sample the bit
 		*value <<= 1;
@@ -318,9 +321,14 @@ void paBusClose(void) {
 		CloseHandle(paBusPort);
 		paBusPort = NULL;
 	}
+	paBusWriteDelay = 0;
+	paBusReadDelay = 0;
 }
 
 BOOL paBusOpen(LPCTSTR portName) {
+
+	LARGE_INTEGER qpBefore = { 0, };
+	LARGE_INTEGER qpAfter = { 0, };
 
 	DCB dcb = { 0, };
 	dcb.DCBlength = sizeof(DCB);
@@ -345,8 +353,19 @@ BOOL paBusOpen(LPCTSTR portName) {
 	if (!EscapeCommFunction(paBusPort, SETDTR)) goto openFailed;
 
 	// Drive our level low
-	paBusSetSO(0);
+	QueryPerformanceCounter(&qpBefore);
+	for (int i = 0; i < 10; ++i) paBusSetSO(0);
+	QueryPerformanceCounter(&qpAfter);
+	
+	// Calculate the write delay
+	paBusWriteDelay = (DWORD)((qpAfter.QuadPart - qpBefore.QuadPart) * 100000 / qpFrequency.QuadPart);
 
+	// Calculate the read delay
+	QueryPerformanceCounter(&qpBefore);
+	for (int i = 0; i < 10; ++i) paBusGetSI();
+	QueryPerformanceCounter(&qpAfter);
+	paBusReadDelay = (DWORD)((qpAfter.QuadPart - qpBefore.QuadPart) * 100000 / qpFrequency.QuadPart);
+	
 	return TRUE;
 
 openFailed:
