@@ -248,6 +248,9 @@ BOOL paBusWriteByte(BYTE value) {
 
 	}
 
+	// Extra delay at the end of each byte
+	paBusDelay(150);
+
 	return TRUE;
 
 	// Jump here if a write times out
@@ -318,6 +321,8 @@ BOOL paBusWriteAcknowledgedBytes(BYTE *buffer, DWORD offset, DWORD length, BOOL 
 
 void paBusClose(void) {
 	if (paBusPort) {
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+		SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 		CloseHandle(paBusPort);
 		paBusPort = NULL;
 	}
@@ -366,6 +371,10 @@ BOOL paBusOpen(LPCTSTR portName) {
 	QueryPerformanceCounter(&qpAfter);
 	paBusReadDelay = (DWORD)((qpAfter.QuadPart - qpBefore.QuadPart) * 100000 / qpFrequency.QuadPart);
 	
+	// Port successfully opened and both lines now idling high
+	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+
 	return TRUE;
 
 openFailed:
