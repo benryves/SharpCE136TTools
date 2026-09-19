@@ -85,7 +85,7 @@ namespace Sharp.CE50P {
 			Array.Copy(bytesWithChecksum, bytesWithoutChecksum, bytesWithoutChecksum.Length);
 
 			// Check the checksum
-			var checksum = (ushort)((bytesWithChecksum[bytesWithChecksum.Length - 1] << 0)) | (bytesWithChecksum[bytesWithChecksum.Length - 2] << 8);
+			var checksum = (ushort)(((bytesWithChecksum[bytesWithChecksum.Length - 1] << 0)) | (bytesWithChecksum[bytesWithChecksum.Length - 2] << 8));
 			foreach (var b in bytesWithoutChecksum) checksum -= b;
 
 			if (checksum != 0) {
