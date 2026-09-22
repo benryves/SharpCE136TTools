@@ -104,7 +104,7 @@ namespace Sharp.CE136T {
 
 		public void Read(byte[] buffer, int offset, int count, bool acknowledged) {
 			if (!PaBus.IsOpen()) throw new ObjectDisposedException("PA bus is not open.");
-			PaBus.Read(buffer, offset, count, acknowledged, ReadTimeout);
+			if (!PaBus.Read(buffer, offset, count, acknowledged, ReadTimeout)) throw new TimeoutException();
 		}
 
 		public void ReadAcknowledgement() {
