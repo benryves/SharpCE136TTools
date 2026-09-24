@@ -14,26 +14,17 @@ namespace Sharp.CE136T {
 		[DllImport("CE-136T.dll", EntryPoint = "paBusIsOpen")]
 		public static extern bool IsOpen();
 
-		[DllImport("CE-136T.dll", EntryPoint = "paBusDelay")]
-		public static extern void Delay(uint microseconds);
-
 		[DllImport("CE-136T.dll", EntryPoint = "paBusReadByte")]
 		public static extern bool Read(out byte value);
 
 		[DllImport("CE-136T.dll", EntryPoint = "paBusReadBytes")]
-		public static extern int Read(byte[] buffer, int offset, int length);
-
-		[DllImport("CE-136T.dll", EntryPoint = "paBusReadAcknowledgedBytes")]
-		public static extern bool Read(byte[] buffer, int offset, int length, bool acknowledged, int timeout);
+		public static extern int Read(byte[] buffer, int offset, int length, int timeout);
 
 		[DllImport("CE-136T.dll", EntryPoint = "paBusWriteByte")]
 		public static extern bool Write(byte value);
 
 		[DllImport("CE-136T.dll", EntryPoint = "paBusWriteBytes")]
-		public static extern int Write(byte[] buffer, int offset, int length);
-
-		[DllImport("CE-136T.dll", EntryPoint = "paBusWriteAcknowledgedBytes")]
-		public static extern bool Write(byte[] buffer, int offset, int length, bool acknowledged, int timeout);
+		public static extern int Write(byte[] buffer, int offset, int length, int timeout);
 
 		[DllImport("CE-136T.dll", EntryPoint = "paBusEnd")]
 		public static extern bool End();
@@ -98,13 +89,8 @@ namespace Sharp.CE136T {
 		public override bool CanRead => true;
 
 		public override int Read(byte[] buffer, int offset, int count) {
-			Read(buffer, offset, count, false);
-			return count;
-		}
-
-		public void Read(byte[] buffer, int offset, int count, bool acknowledged) {
 			if (!PaBus.IsOpen()) throw new ObjectDisposedException("PA bus is not open.");
-			if (!PaBus.Read(buffer, offset, count, acknowledged, ReadTimeout)) throw new TimeoutException();
+			return PaBus.Read(buffer, offset, count, ReadTimeout);
 		}
 
 		public void ReadAcknowledgement() {
@@ -126,7 +112,10 @@ namespace Sharp.CE136T {
 		public override bool CanWrite => true;
 
 		public override void Write(byte[] buffer, int offset, int count) {
-			Write(buffer, offset, count, false);
+			if (!PaBus.IsOpen()) throw new ObjectDisposedException("PA bus is not open.");
+			if (PaBus.Write(buffer, offset, count, WriteTimeout) != count) {
+				throw new TimeoutException();
+			}
 		}
 
 		public override void Flush() {
@@ -139,11 +128,6 @@ namespace Sharp.CE136T {
 
 		public void WriteAcknowledgement() {
 			WriteByte(0xFA);
-		}
-
-		public void Write(byte[] buffer, int offset, int count, bool acknowledged) {
-			if (!PaBus.IsOpen()) throw new ObjectDisposedException("PA bus is not open.");
-			if (!PaBus.Write(buffer, offset, count, acknowledged, WriteTimeout)) throw new TimeoutException();
 		}
 
 		#endregion
