@@ -283,6 +283,7 @@ namespace Sharp.CE50P {
 						case 0xA5:
 							Debug.WriteLine(string.Format("<- 0x{0:X2} [Identify]", value));
 							paBusWriter.Write((ushort)0x01F0);
+							if (value == 0xA5) paBusStream.Flush();
 							break;
 						case 0xC0:
 							Debug.WriteLine("<- 0xC0 [Printer Init]");

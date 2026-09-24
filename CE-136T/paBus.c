@@ -3,37 +3,43 @@
 HANDLE paBusPort = NULL;
 
 LARGE_INTEGER qpFrequency = { 0, };
+LARGE_INTEGER qpCurrent = { 0, };
 LARGE_INTEGER qpTimeout = { 0, };
-
-BOOL paBusReading = FALSE;
-BOOL paBusWriting = FALSE;
 
 DWORD paBusReadDelay = 0;
 DWORD paBusWriteDelay = 0;
 
 static void paBusResetTimeout(DWORD microseconds) {
-	LARGE_INTEGER qpCurrent = { 0, };
 	QueryPerformanceCounter(&qpCurrent);
 	qpTimeout.QuadPart = qpCurrent.QuadPart + (microseconds * qpFrequency.QuadPart) / 1000000;
 }
 
 static BOOL paBusTimedOut(void) {
-	LARGE_INTEGER qpCurrent = { 0, };
 	QueryPerformanceCounter(&qpCurrent);
 	return qpCurrent.QuadPart >= qpTimeout.QuadPart;
 }
 
 static void paBusDelay(DWORD microseconds) {
-	paBusResetTimeout(microseconds);
-	while (!paBusTimedOut());
+	LARGE_INTEGER qpDelay = { 0, };
+	if (!QueryPerformanceCounter(&qpDelay)) return;
+	qpDelay.QuadPart += (microseconds * qpFrequency.QuadPart) / 1000000;
+	do {
+		if (!QueryPerformanceCounter(&qpCurrent)) return;
+	} while (qpCurrent.QuadPart < qpDelay.QuadPart);
 }
 
-static void paBusSetSO(BOOL level) {
-	if (level) {
-		EscapeCommFunction(paBusPort, CLRRTS);
+BOOL writtenSO;
+static BOOL paBusSetSO(BOOL level) {
+	if (EscapeCommFunction(paBusPort, level ? CLRRTS : SETRTS)) {
+		writtenSO = level;
+		return TRUE;
 	} else {
-		EscapeCommFunction(paBusPort, SETRTS);
+		return FALSE;
 	}
+}
+
+static BOOL paBusGetSO(void) {
+	return writtenSO;
 }
 
 static BOOL paBusGetSI(void) {
@@ -43,33 +49,16 @@ static BOOL paBusGetSI(void) {
 }
 
 BOOL paBusEnd(void) {
-
-	// Check port is open
-	if (!paBusPort) return FALSE;
-
-	// Wait for the line to go back low naturally
-	paBusResetTimeout(40000);
-	while (paBusGetSI()) {
-		if (paBusTimedOut()) return FALSE;
-	}
-
-	// We're definitely no longer reading now
-	paBusReading = FALSE;
-
-	// Drive our end of the line low
+	// Set SO low
 	paBusSetSO(0);
-
-	// Ensure the bus has gone back idle
+	// Wait for SI to follow suit
 	paBusResetTimeout(40000);
 	while (paBusGetSI()) {
-		if (paBusTimedOut()) return FALSE;
+		if (paBusTimedOut()) {
+			return FALSE;
+		}
 	}
-	
-	// We're definitely no longer writing now
-	paBusWriting = FALSE;
-
 	return TRUE;
-
 }
 
 BOOL paBusReadByte(BYTE *value) {
@@ -77,24 +66,31 @@ BOOL paBusReadByte(BYTE *value) {
 	// Check port is open
 	if (!paBusPort) return FALSE;
 
-	// We're not writing any more
-	paBusWriting = FALSE;
+	BOOL entrySO = paBusGetSO();
+	BOOL entrySI = paBusGetSI();
 
 	*value = 0;
 
-	if (!paBusReading) {
-
-		// Wait for the line to go high
+	// Is the line closed?
+	if (!entrySO && !entrySI) {
+		// Line closed.
+		// Need to wait for SI to go high first
 		paBusResetTimeout(40000);
 		while (!paBusGetSI()) {
 			if (paBusTimedOut()) goto readTimedOut;
 		}
-
-		// Respond by driving our line high
+		// Acknowledge by setting SO high
 		paBusSetSO(1);
-
-		// We're now reading
-		paBusReading = TRUE;
+		// Now wait for SI to go low...
+	} else if (entrySO && entrySI) {
+		// Both lines are high, so line already open.
+		// Wait for SI to go low.
+	} else if (!entrySO && entrySI) {
+		// I'm inactive, but SI already gone high to start sending something!
+		paBusSetSO(1);
+		// Now wait for SI to go low...
+	} else {
+		// I'm active, but SI has already gone low
 	}
 
 	for (int bit = 0; bit < 8; ++bit) {
@@ -125,39 +121,42 @@ BOOL paBusReadByte(BYTE *value) {
 		while (!paBusGetSI()) {
 			if (paBusTimedOut()) goto readTimedOut;
 		}
-
 	}
 
 	return TRUE;
 
 	// Jump here if a read times out
 readTimedOut:
-	paBusEnd();
+	paBusSetSO(entrySO);
 	return FALSE;
 
 }
 
 DWORD paBusReadBytes(BYTE *buffer, DWORD offset, DWORD length, DWORD timeout) {
-	BYTE value;
+	LARGE_INTEGER qpUserTimeout;
 	DWORD read = 0;
 
-	LARGE_INTEGER currentTime = { 0, };
-	LARGE_INTEGER endTime = { 0, };
+	// Check port is open
+	if (!paBusPort) return read;
 
-	QueryPerformanceCounter(&endTime);
-	endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+	// Initialise the user timeout
+	if (!QueryPerformanceCounter(&qpUserTimeout)) return 0;
+	qpUserTimeout.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
 
 	buffer += offset;
 
 	while (read < length) {
-		if (paBusReadByte(&value)) {
-			*buffer++ = value;
+		if (paBusReadByte(buffer)) {
+			// Update pointers/counters
+			++buffer;
 			++read;
-			QueryPerformanceCounter(&endTime);
-			endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+			// Update the user timeout
+			if (QueryPerformanceCounter(&qpUserTimeout)) {
+				qpUserTimeout.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+			}
 		} else {
-			QueryPerformanceCounter(&currentTime);
-			if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+			// Timed out?
+			if (!QueryPerformanceCounter(&qpCurrent) || qpCurrent.QuadPart >= qpUserTimeout.QuadPart) break;
 		}
 	}
 	return read;
@@ -168,20 +167,15 @@ BOOL paBusWriteByte(BYTE value) {
 	// Check port is open
 	if (!paBusPort) return FALSE;
 
-	// We're not reading any more
-	paBusReading = FALSE;
-
 	// Drive our line high
 	paBusSetSO(1);
+	paBusDelay(300);
 
 	// Wait for the receiver to respond and go high too
 	paBusResetTimeout(40000);
 	while (!paBusGetSI()) {
 		if (paBusTimedOut()) goto writeTimedOut;
 	}
-
-	// We're now writing
-	paBusWriting = TRUE;
 
 	for (int bit = 0; bit < 8; ++bit) {
 
@@ -214,39 +208,43 @@ BOOL paBusWriteByte(BYTE value) {
 
 	// Extra delay at the end of each byte
 	paBusDelay(150);
-
 	return TRUE;
 
 	// Jump here if a write times out
 writeTimedOut:
-	paBusEnd();
+	paBusSetSO(FALSE);
 	return FALSE;
 
 }
 
 DWORD paBusWriteBytes(BYTE *buffer, DWORD offset, DWORD length, DWORD timeout) {
-
-	LARGE_INTEGER currentTime = { 0, };
-	LARGE_INTEGER endTime = { 0, };
+	LARGE_INTEGER qpUserTimeout;
 	DWORD written = 0;
 
-	QueryPerformanceCounter(&endTime);
-	endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+	// Check port is open
+	if (!paBusPort) return written;
+
+	// Initialise the user timeout
+	if (!QueryPerformanceCounter(&qpUserTimeout)) return 0;
+	qpUserTimeout.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
 
 	buffer += offset;
+
 	while (written < length) {
 		if (paBusWriteByte(*buffer)) {
+			// Update pointers/counters
 			++buffer;
 			++written;
-			QueryPerformanceCounter(&endTime);
-			endTime.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+			// Update the user timeout
+			if (QueryPerformanceCounter(&qpUserTimeout)) {
+				qpUserTimeout.QuadPart += (timeout * qpFrequency.QuadPart) / 1000;
+			}
 		} else {
-			// Check to see if we've timed out
-			QueryPerformanceCounter(&currentTime);
-			if (currentTime.QuadPart >= endTime.QuadPart) return FALSE;
+			// Timed out?
+			if (!QueryPerformanceCounter(&qpCurrent) || qpCurrent.QuadPart >= qpUserTimeout.QuadPart) break;
 		}
 	}
-	return length;
+	return written;
 }
 
 void paBusClose(void) {
@@ -291,7 +289,7 @@ BOOL paBusOpen(LPCTSTR portName) {
 	QueryPerformanceCounter(&qpBefore);
 	for (int i = 0; i < 10; ++i) paBusSetSO(0);
 	QueryPerformanceCounter(&qpAfter);
-	
+
 	// Calculate the write delay
 	paBusWriteDelay = (DWORD)((qpAfter.QuadPart - qpBefore.QuadPart) * 100000 / qpFrequency.QuadPart);
 
@@ -300,7 +298,7 @@ BOOL paBusOpen(LPCTSTR portName) {
 	for (int i = 0; i < 10; ++i) paBusGetSI();
 	QueryPerformanceCounter(&qpAfter);
 	paBusReadDelay = (DWORD)((qpAfter.QuadPart - qpBefore.QuadPart) * 100000 / qpFrequency.QuadPart);
-	
+
 	// Port successfully opened and both lines now idling high
 	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
@@ -314,4 +312,15 @@ openFailed:
 
 BOOL paBusIsOpen(void) {
 	return paBusPort != NULL;
+}
+
+BOOL paBusIsEnded(BOOL *ended) {
+
+	// Check port is open
+	if (!paBusPort) return FALSE;
+
+	// Check whether the communication line is closed ("ended") - both lines should be low
+	*ended = !paBusGetSO() && !paBusGetSI();
+
+	return TRUE;
 }

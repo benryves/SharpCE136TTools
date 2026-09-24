@@ -14,3 +14,4 @@ __declspec(dllexport) BOOL paBusWriteByte(BYTE value);
 __declspec(dllexport) DWORD paBusWriteBytes(BYTE *buffer, DWORD offset, DWORD length, DWORD timeout);
 
 __declspec(dllexport) BOOL paBusEnd(void);
+__declspec(dllexport) BOOL paBusIsEnded(BOOL *ended);
