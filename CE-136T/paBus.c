@@ -71,26 +71,20 @@ BOOL paBusReadByte(BYTE *value) {
 
 	*value = 0;
 
-	// Is the line closed?
-	if (!entrySO && !entrySI) {
-		// Line closed.
-		// Need to wait for SI to go high first
-		paBusResetTimeout(40000);
-		while (!paBusGetSI()) {
-			if (paBusTimedOut()) goto readTimedOut;
+	// Have we opened the line?
+	if (!entrySO) {
+		// We're holding the line closed, so open it
+		if (!entrySI) {
+			// Need to wait for sender to go high first before we can receive anything
+			paBusResetTimeout(40000);
+			while (!paBusGetSI()) {
+				if (paBusTimedOut()) goto readTimedOut;
+			}
 		}
 		// Acknowledge by setting SO high
 		paBusSetSO(1);
-		// Now wait for SI to go low...
-	} else if (entrySO && entrySI) {
-		// Both lines are high, so line already open.
-		// Wait for SI to go low.
-	} else if (!entrySO && entrySI) {
-		// I'm inactive, but SI already gone high to start sending something!
-		paBusSetSO(1);
-		// Now wait for SI to go low...
 	} else {
-		// I'm active, but SI has already gone low
+		// Line already open
 	}
 
 	for (int bit = 0; bit < 8; ++bit) {
