@@ -67,14 +67,13 @@ BOOL paBusReadByte(BYTE *value) {
 	if (!paBusPort) return FALSE;
 
 	BOOL entrySO = paBusGetSO();
-	BOOL entrySI = paBusGetSI();
 
 	*value = 0;
 
 	// Have we opened the line?
 	if (!entrySO) {
 		// We're holding the line closed, so open it
-		if (!entrySI) {
+		if (!paBusGetSI()) {
 			// Need to wait for sender to go high first before we can receive anything
 			paBusResetTimeout(40000);
 			while (!paBusGetSI()) {
@@ -83,8 +82,6 @@ BOOL paBusReadByte(BYTE *value) {
 		}
 		// Acknowledge by setting SO high
 		paBusSetSO(1);
-	} else {
-		// Line already open
 	}
 
 	for (int bit = 0; bit < 8; ++bit) {
@@ -122,6 +119,8 @@ BOOL paBusReadByte(BYTE *value) {
 	// Jump here if a read times out
 readTimedOut:
 	paBusSetSO(entrySO);
+	// Force a delay to time-out on the sender and resynchronise
+	paBusDelay(20000);
 	return FALSE;
 
 }
