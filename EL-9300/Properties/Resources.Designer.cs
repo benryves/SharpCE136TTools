@@ -99,5 +99,53 @@ namespace Sharp.EL9300.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+        ///&lt;symbols&gt;
+        ///	&lt;symbol text=&quot;0&quot;&gt;₀&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;1&quot;&gt;₁&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;2&quot;&gt;₂&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;3&quot;&gt;₃&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;4&quot;&gt;₄&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;5&quot;&gt;₅&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;6&quot;&gt;₆&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;7&quot;&gt;₇&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;8&quot;&gt;₈&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;9&quot;&gt;₉&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;a&quot;&gt;𝐚&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;b&quot;&gt;𝐛&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;c&quot;&gt;𝐜&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;d&quot;&gt;𝐝&lt;/symbol&gt;
+        ///	&lt;symbol text=&quot;e&quot;&gt;𝐞&lt;/symbol&gt;
+        ///	&lt;symb [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Symbols {
+            get {
+                return ResourceManager.GetString("Symbols", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+        ///&lt;tokens&gt;
+        ///	&lt;!-- &lt;token value=&quot;00&quot;&gt;&lt;/token&gt; --&gt;
+        ///	&lt;token value=&quot;01&quot; mode=&quot;08&quot;&gt;@i@&lt;/token&gt;
+        ///	&lt;token value=&quot;02&quot; mode=&quot;08&quot;&gt;@complex_angle@&lt;/token&gt;
+        ///	&lt;token value=&quot;03&quot;&gt;.&lt;/token&gt;
+        ///	&lt;token value=&quot;04&quot;&gt;@EE@&lt;/token&gt;
+        ///	&lt;!-- &lt;token value=&quot;05&quot;&gt;&lt;/token&gt; --&gt;
+        ///	&lt;token value=&quot;06&quot; mode=&quot;00&quot;&gt;Y1&lt;/token&gt;
+        ///	&lt;token value=&quot;07&quot; mode=&quot;00&quot;&gt;Y2&lt;/token&gt;
+        ///	&lt;token value=&quot;08&quot; mode=&quot;00&quot;&gt;Y3&lt;/token&gt;
+        ///	&lt;token value=&quot;09&quot; mode=&quot;00&quot;&gt;Y4&lt;/token&gt;
+        ///	&lt;token value=&quot;0A&quot; mode=&quot;00&quot;&gt;R1&lt;/token&gt;
+        ///	&lt;token value=&quot;0B&quot; mod [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Tokens {
+            get {
+                return ResourceManager.GetString("Tokens", resourceCulture);
+            }
+        }
     }
 }

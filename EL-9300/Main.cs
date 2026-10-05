@@ -535,5 +535,104 @@ namespace Sharp.EL9300 {
 
 		#endregion
 
+		#region Editors
+
+		IEditorForm ActiveEditor { get => ActiveMdiChild as IEditorForm; }
+
+		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
+			openFileDialog.Filter = "EL-9300 Program (*.g1p)|*.g1p";
+			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
+				try {
+
+					var programTransfer = new LinkTransfer(openFileDialog.FileName);
+
+					var editor = new ProgramEditor {
+						MdiParent = this,
+						FileName = openFileDialog.FileName,
+					};
+					try {
+						editor.Open(programTransfer);
+						editor.Dirty = false;
+					} catch {
+						editor.Dispose();
+						throw;
+					}
+
+					editor.FormClosing += Editor_FormClosing;
+					editor.Show();
+
+				} catch (Exception ex) {
+					MessageBox.Show(this, "Could not open '" + Path.GetFileName(openFileDialog.FileName) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				}
+			}
+		}
+
+		private bool Save() {
+			var editor = ActiveEditor;
+			if (editor != null) {
+				var filename = editor.FileName;
+				if (string.IsNullOrEmpty(filename)) {
+					return SaveAs();
+				} else {
+					try {
+						editor.Save().Save(filename);
+						editor.Dirty = false;
+						return true;
+					} catch (Exception ex) {
+						if (MessageBox.Show(this, "Could not save '" + Path.GetFileName(filename) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1) == DialogResult.OK) {
+							return SaveAs();
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		private bool SaveAs() {
+			var editor = ActiveEditor;
+			if (editor != null) {
+				saveFileDialog.Filter = editor.FileDialogFilter;
+				saveFileDialog.FileName = editor.FileDialogFileName;
+				while (saveFileDialog.ShowDialog(this) == DialogResult.OK) {
+					try {
+						editor.Save().Save(saveFileDialog.FileName);
+						editor.Dirty = false;
+						editor.FileName = saveFileDialog.FileName;
+						return true;
+					} catch (Exception ex) {
+						if (MessageBox.Show(this, "Could not save '" + Path.GetFileName(saveFileDialog.FileName) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.RetryCancel, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1) == DialogResult.Cancel) break;
+					}
+				}
+			}
+			return false;
+		}
+
+		private void Editor_FormClosing(object sender, FormClosingEventArgs e) {
+			if (sender is IEditorForm editor && editor.Dirty) {
+				switch (MessageBox.Show(this, "Do you want to save changes" + (string.IsNullOrEmpty(editor.FileName) ? "" : (" to " + Path.GetFileName(editor.FileName))) + "?", Application.ProductName, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)) {
+					case DialogResult.Yes:
+						e.Cancel = !Save();
+						break;
+					case DialogResult.No:
+						e.Cancel = false;
+						break;
+					case DialogResult.Cancel:
+						e.Cancel = true;
+						break;
+				}
+			}
+		}
+
+		private void SaveToolStripMenuItem_Click(object sender, EventArgs e) {
+			Save();
+		}
+
+		private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e) {
+			SaveAs();
+		}
+
+
+		#endregion
+
 	}
 }

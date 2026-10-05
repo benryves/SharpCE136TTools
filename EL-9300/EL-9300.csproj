@@ -47,6 +47,7 @@
     <Compile Include="..\CE-136T.cs">
       <Link>CE-136T.cs</Link>
     </Compile>
+    <Compile Include="IEditorForm.cs" />
     <Compile Include="LinkTransfer.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
@@ -55,6 +56,13 @@
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="ProgramEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ProgramEditor.Designer.cs">
+      <DependentUpon>ProgramEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ProgramTypes.cs" />
     <Compile Include="ProgressDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -62,8 +70,13 @@
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Symbols.cs" />
+    <Compile Include="Tokeniser.cs" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ProgramEditor.resx">
+      <DependentUpon>ProgramEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
@@ -100,6 +113,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\page_white_get.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Tokens.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Symbols.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

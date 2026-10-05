@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tokens>
+	<!-- <token value="00"></token> -->
+	<token value="01" mode="08">@i@</token>
+	<token value="02" mode="08">@complex_angle@</token>
+	<token value="03">.</token>
+	<token value="04">@EE@</token>
+	<!-- <token value="05"></token> -->
+	<token value="06" mode="00">Y1</token>
+	<token value="07" mode="00">Y2</token>
+	<token value="08" mode="00">Y3</token>
+	<token value="09" mode="00">Y4</token>
+	<token value="0A" mode="00">R1</token>
+	<token value="0B" mode="00">R2</token>
+	<token value="0C" mode="00">Y1T</token>
+	<token value="0D" mode="00">X1T</token>
+	<token value="0E" mode="00">Y2T</token>
+	<token value="0F" mode="00">X2T</token>
+	<token value="10">@0@</token>
+	<token value="11">@1@</token>
+	<token value="12">@2@</token>
+	<token value="13">@3@</token>
+	<token value="14">@4@</token>
+	<token value="15">@5@</token>
+	<token value="16">@6@</token>
+	<token value="17">@7@</token>
+	<token value="18">@8@</token>
+	<token value="19">@9@</token>
+	<token value="1A">_</token>
+	<!-- <token value="1B"></token> -->
+	<token value="1C" mode="11">@sigma@x</token>
+	<token value="1D" mode="11">@sigma@y</token>
+	<token value="1E" mode="11">sy</token>
+	<token value="1F" mode="11">sx</token>
+	<token value="20"><![CDATA[ ]]></token>
+	<token value="21" mode="11">@n@</token>
+	<token value="22" mode="11">@SIGMA@x</token>
+	<token value="23" mode="11">@SIGMA@x@^2@</token>
+	<token value="24" mode="11">@SIGMA@xy</token>
+	<token value="25" mode="11">@SIGMA@y</token>
+	<token value="26" mode="11">@SIGMA@y@^2@</token>
+	<token value="27" mode="11">xmin</token>
+	<token value="28" mode="11">xmax</token>
+	<token value="29" mode="11">ymin</token>
+	<token value="2A" mode="11">ymax</token>
+	<token value="2B" mode="11">@x_mean@</token>
+	<token value="2C" mode="11">@y_mean@</token>
+	<token value="2D" mode="11">@a@</token>
+	<token value="2E" mode="11">@b@</token>
+	<token value="2F" mode="11">@r@</token>
+	<token value="30">0</token>
+	<token value="31">1</token>
+	<token value="32">2</token>
+	<token value="33">3</token>
+	<token value="34">4</token>
+	<token value="35">5</token>
+	<token value="36">6</token>
+	<token value="37">7</token>
+	<token value="38">8</token>
+	<token value="39">9</token>
+	<token value="3A" mode="02">@A@</token>
+	<token value="3B" mode="02">@B@</token>
+	<token value="3C" mode="02">@C@</token>
+	<token value="3D" mode="02">@D@</token>
+	<token value="3E" mode="02">@E@</token>
+	<token value="3F" mode="02">@F@</token>
+	<token value="40" mode="10">St</token>
+	<token value="41">A</token>
+	<token value="42">B</token>
+	<token value="43">C</token>
+	<token value="44">D</token>
+	<token value="45">E</token>
+	<token value="46">F</token>
+	<token value="47">G</token>
+	<token value="48">H</token>
+	<token value="49">I</token>
+	<token value="4A">J</token>
+	<token value="4B">K</token>
+	<token value="4C">L</token>
+	<token value="4D">M</token>
+	<token value="4E">N</token>
+	<token value="4F">O</token>
+	<token value="50">P</token>
+	<token value="51">Q</token>
+	<token value="52">R</token>
+	<token value="53">S</token>
+	<token value="54">T</token>
+	<token value="55">U</token>
+	<token value="56">V</token>
+	<token value="57">W</token>
+	<token value="58">X</token>
+	<token value="59">Y</token>
+	<token value="5A">Z</token>
+	<token value="5B" mode="00">Ans</token>
+	<token value="5C">@theta@</token>
+	<token value="5D" mode="1D">random</token>
+	<token value="5E" mode="1D">@pi@</token>
+	<!-- <token value="5F"></token> -->
+	<!-- <token value="60"></token> -->
+	<token value="61">a</token>
+	<token value="62">b</token>
+	<token value="63">c</token>
+	<token value="64">d</token>
+	<token value="65">e</token>
+	<token value="66">f</token>
+	<token value="67">g</token>
+	<token value="68">h</token>
+	<token value="69">i</token>
+	<token value="6A">j</token>
+	<token value="6B">k</token>
+	<token value="6C">l</token>
+	<token value="6D">m</token>
+	<token value="6E">n</token>
+	<token value="6F">o</token>
+	<token value="70">p</token>
+	<token value="71">q</token>
+	<token value="72">r</token>
+	<token value="73">s</token>
+	<token value="74">t</token>
+	<token value="75">u</token>
+	<token value="76">v</token>
+	<token value="77">w</token>
+	<token value="78">x</token>
+	<token value="79">y</token>
+	<token value="7A">z</token>
+	<token value="7B" mode="01">@integral@</token>
+	<token value="7C" mode="01">dx</token>
+	<token value="7D" mode="01">d/dx(</token>
+	<token value="7E" mode="04">mat </token>
+	<token value="7F" mode="04">dim </token>
+	<token value="80" mode="04">row swap(</token>
+	<token value="81" mode="04">row plus(</token>
+	<token value="82" mode="04">row mult(</token>
+	<token value="83" mode="04">row m.p.(</token>
+	<token value="84" mode="01">@-&gt;@deg </token>
+	<token value="85" mode="01">@-&gt;@dms </token>
+	<token value="86" mode="1D">@^-1@</token>
+	<token value="87" mode="1D">@^2@</token>
+	<token value="88" mode="15">!</token>
+	<token value="89" mode="1D">^</token>
+	<token value="8A" mode="15">@Com@</token>
+	<token value="8B" mode="15">@Per@</token>
+	<token value="8C" mode="1D" enabled="disabled">^</token>
+	<token value="8D" mode="1D">@x@@root@</token>
+	<token value="8E" enabled="disabled"><![CDATA[ ]]></token>
+	<!-- <token value="8F"></token> -->
+	<token value="90" mode="1D">log </token>
+	<token value="91" mode="1D">ln </token>
+	<token value="92" mode="1D">@10@^</token>
+	<token value="93" mode="1D">e^</token>
+	<token value="94" mode="1D">sin </token>
+	<token value="95" mode="1D">cos </token>
+	<token value="96" mode="1D">tan </token>
+	<token value="97" mode="1D">sin@^-1@ </token>
+	<token value="98" mode="1D">cos@^-1@ </token>
+	<token value="99" mode="1D">tan@^-1@ </token>
+	<token value="9A" mode="1D">sinh </token>
+	<token value="9B" mode="1D">cosh </token>
+	<token value="9C" mode="1D">tanh </token>
+	<token value="9D" mode="1D">sinh@^-1@ </token>
+	<token value="9E" mode="1D">cosh@^-1@ </token>
+	<token value="9F" mode="1D">tanh@^-1@ </token>
+	<token value="A0">@-@</token>
+	<token value="A1" mode="1D">@root@</token>
+	<token value="A2" mode="00">@plusminus@@root@</token>
+	<token value="A3" mode="1D">abs </token>
+	<token value="A4" mode="15">int </token>
+	<token value="A5" mode="15">ipart </token>
+	<token value="A6" mode="15">fpart </token>
+	<token value="A7" mode="08">real </token>
+	<token value="A8" mode="08">image </token>
+	<token value="A9" mode="08">arg </token>
+	<token value="AA" mode="08">conj </token>
+	<token value="AB" mode="04">det </token>
+	<token value="AC" mode="04">trns </token>
+	<token value="AD" mode="02">not </token>
+	<token value="AE" mode="02">neg </token>
+	<!-- <token value="AF"></token> -->
+	<token value="B0" enabled="disabled"><![CDATA[ ]]></token>
+	<token value="B1">@frac@</token>
+	<token value="B2">*</token>
+	<token value="B3">/</token>
+	<token value="B4">+</token>
+	<token value="B5">-</token>
+	<token value="B6" mode="02">and </token>
+	<token value="B7" mode="02">or </token>
+	<token value="B8" mode="02">xor </token>
+	<token value="B9" mode="02">xnor </token>
+	<token value="BA">)</token>
+	<token value="BB">(</token>
+	<token value="BC" enabled="disabled"><![CDATA[ ]]></token>
+	<token value="BD" mode="14">]</token>
+	<token value="BE">,</token>
+	<token value="BF" mode="14">[</token>
+	<token value="C0">&gt;</token>
+	<token value="C1">&gt;=</token>
+	<token value="C2">&lt;</token>
+	<token value="C3">&lt;=</token>
+	<token value="C4">@not_=@</token>
+	<token value="C5">=</token>
+	<token value="C6">@inv_=@</token>
+	<token value="C7" mode="00">@sto@</token>
+	<token value="C8" mode="11">x'</token>
+	<token value="C9" mode="11">y'</token>
+	<token value="CA" mode="02">@-&gt;@hex</token>
+	<token value="CB" mode="02">@-&gt;@dec</token>
+	<token value="CC" mode="02">@-&gt;@oct</token>
+	<token value="CD" mode="02">@-&gt;@bin</token>
+	<token value="CE" mode="01">@-&gt;@xy</token>
+	<token value="CF" mode="01">@-&gt;@r@theta@</token>
+	<token value="D0" mode="11">Zoom </token>
+	<token value="D1" mode="11">Range </token>
+	<token value="D2" mode="11">Line </token>
+	<token value="D3" mode="11">Plot </token>
+	<token value="D4" mode="01">Graph </token>
+	<token value="D5" mode="11">Auto </token>
+	<token value="D6" mode="01">Fill </token>
+	<token value="D7" mode="01">DotGraph </token>
+	<!-- <token value="D8"></token> -->
+	<!-- <token value="D9"></token> -->
+	<token value="DA" mode="10">G(HIST) </token>
+	<token value="DB" mode="10">G(B.L.) </token>
+	<token value="DC" mode="10">G(C.F.) </token>
+	<token value="DD" mode="10">G(N.D.) </token>
+	<token value="DE" mode="10">G(S.D.) </token>
+	<token value="DF" mode="10">G(B.C.) </token>
+	<token value="E0" mode="10">G(line) </token>
+	<token value="E1" mode="10">G(exp) </token>
+	<token value="E2" mode="10">G(ln) </token>
+	<token value="E3" mode="10">G(log) </token>
+	<token value="E4" mode="10">G(pow) </token>
+	<token value="E5" mode="10">G(inv) </token>
+	<token value="E6" mode="10">Stat X </token>
+	<token value="E7" mode="10">Stat XW </token>
+	<token value="E8" mode="10">Stat XY </token>
+	<token value="E9" mode="10">Stat XYW </token>
+	<token value="EA">ClrT </token>
+	<token value="EB">ClrG </token>
+	<token value="EC">DispT </token>
+	<token value="ED">DispG </token>
+	<token value="EE" enabled="disabled"><![CDATA[ ]]></token>
+	<token value="EF" enabled="disabled"><![CDATA[ ]]></token>
+	<token value="F0">Goto </token>
+	<token value="F1">Gosub </token>
+	<token value="F2">Return </token>
+	<token value="F3">Label </token>
+	<token value="F4">Input </token>
+	<token value="F5">Print </token>
+	<token value="F6">Wait </token>
+	<token value="F7">Rem </token>
+	<token value="F8">"</token>
+	<token value="F9">If </token>
+	<!-- <token value="FA"></token> -->
+	<!-- <token value="FB"></token> -->
+	<token value="FC" mode="10">Data </token>
+	<!-- <token value="FD"></token> -->
+	<token value="FE">End </token>
+	<token value="FF" mode="00">end </token>
+</tokens>

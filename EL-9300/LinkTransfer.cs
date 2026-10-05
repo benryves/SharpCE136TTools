@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 
 namespace Sharp.EL9300 {
-	internal class LinkTransfer {
+	public class LinkTransfer {
 
 		private byte[] head = new byte[32];
 		public byte[] Head {
