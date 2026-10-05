@@ -1,5 +1,6 @@
 ﻿using Sharp.CE136T;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -179,6 +180,45 @@ namespace Sharp.EL9300 {
 				statusLabel.Text = "Ready";
 				statusLabel.Image = Properties.Resources.IconConnect;
 			}
+		}
+
+		#endregion
+
+		#region File dialogs
+
+		private string GetFileDialogFilter(bool showAll, string matchingFilename) {
+			// Set up the save/open dialog filters
+			var allFilterExtensions = new List<string>();
+			var filterWithExtensions = new List<string>();
+			foreach (var filter in new[] {
+				"Program (*.g1p;*.gap)",
+				"Matrix (*.g1m;*.gam)",
+				"Data (*.g1l;*.gal)",
+				"Solver Equation (*.g1e;*.gae)",
+				"Graph Equation (*.g1y;*.gay)",
+				"Backup (*.gcb)",
+			}) {
+				var description = filter.Split('(')[0].TrimEnd();
+				var extensions = filter.Split('(')[1].TrimEnd(')');
+				allFilterExtensions.Add(extensions);
+				if (matchingFilename != null) {
+					bool matchesFilename = false;
+					foreach (var extension in extensions.Split(';')) {
+						if ("*" + Path.GetExtension(matchingFilename).ToLowerInvariant() == extension.ToLowerInvariant()) {
+							extensions = extension;
+							matchesFilename = true;
+							break;
+						}
+					}
+					if (!matchesFilename) continue;
+				}
+				filterWithExtensions.Add("EL-9300 " + description + "|" + extensions);
+			}
+			var fullFilter = string.Join("|", filterWithExtensions.ToArray());
+			if (showAll) {
+				fullFilter = "All EL-9300 Files|" + string.Join(";", allFilterExtensions.ToArray()) + "|" + fullFilter;
+			}
+			return fullFilter;
 		}
 
 		#endregion
@@ -448,6 +488,8 @@ namespace Sharp.EL9300 {
 			// Is there a file to save?
 			if (e.Result is LinkTransfer linkTransfer) {
 				var saved = false;
+				saveFileDialog.Filter = GetFileDialogFilter(false, linkTransfer.GetFileName());
+				saveFileDialog.FileName = linkTransfer.GetFileName();
 				while (!saved && saveFileDialog.ShowDialog(this) == DialogResult.OK) {
 					try {
 						linkTransfer.Save(saveFileDialog.FileName);
@@ -470,6 +512,7 @@ namespace Sharp.EL9300 {
 		private void SendToolStripMenuItem_Click(object sender, EventArgs e) {
 			if (backgroundWorker.IsBusy || !InterfaceIsOn()) return;
 			// Try to get the variable to transfer
+			openFileDialog.Filter = GetFileDialogFilter(true, null);
 			LinkTransfer linkTransfer = null;
 			while (linkTransfer == null && openFileDialog.ShowDialog(this) == DialogResult.OK) {
 				try {

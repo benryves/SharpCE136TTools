@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Sharp.EL9300 {
 	internal class LinkTransfer {
@@ -61,5 +62,30 @@ namespace Sharp.EL9300 {
 			}
 		}
 
+		public string GetFileName() {
+			switch (head[0x00]) {
+				case 0: // Matrices, stats
+					if (head[0x11] == 0xFF) {
+						return Encoding.ASCII.GetString(body, 1, 8).TrimEnd() + ".gam";
+					} else if (head[0x11] == 0x40) {
+						return "DATA.g1l";
+					} else {
+						return Encoding.ASCII.GetString(head, 0x11, 1) + ".g1m";
+					}
+				case 1: // Graph equations
+				case 2: // Programs
+				case 3: // Solver equations
+					var extension = "?ype"[head[0x00]];
+					if (head[0x02] == 0) {
+						return Encoding.ASCII.GetString(body, 9, 16).TrimEnd('\0') + ".g1" + extension;
+					} else {
+						return Encoding.ASCII.GetString(body, 1, 8).TrimEnd() + ".ga" + extension;
+					}
+				case 4: // Backups
+					return "BACKUP.gcb";
+				default:
+					return null;
+			}
+		}
 	}
 }
