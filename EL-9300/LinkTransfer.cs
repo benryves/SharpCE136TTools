@@ -89,6 +89,10 @@ namespace Sharp.EL9300 {
 			}
 		}
 
+		public override string ToString() {
+			return GetFileName();
+		}
+
 		public bool HasSubItems {
 			get {
 				// Body must start 0xFB <file name>
@@ -122,6 +126,7 @@ namespace Sharp.EL9300 {
 
 			var groupFileName = Encoding.ASCII.GetString(reader.ReadBytes(8)).TrimEnd(' ');
 			var groupFileExtension = Encoding.ASCII.GetString(reader.ReadBytes(4)).TrimEnd(' ');
+			if (groupFileExtension != "1") throw new InvalidDataException("Group extension is not 1.");
 
 			if (reader.ReadInt32() != 0) throw new InvalidDataException();
 
@@ -145,6 +150,7 @@ namespace Sharp.EL9300 {
 			if (reader.ReadUInt16() != 0) throw new InvalidDataException();
 
 			if (reader.ReadByte() != 0xFF) throw new InvalidDataException();
+
 			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
 			if (reader.ReadByte() != 0x09) throw new InvalidDataException();
 			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
@@ -166,29 +172,62 @@ namespace Sharp.EL9300 {
 				stream.Seek(-6, SeekOrigin.Current);
 				var subItemBody = reader.ReadBytes(nextVariableSize);
 
-				// Generate the subitem's head
-				var subItemHead = new byte[32];
-				switch (groupFileName) {
-					case "GRAPH":
-						subItemHead[0x00] = 0x01;
-						break;
-					case "PROGRAM":
-						subItemHead[0x00] = 0x02;
-						break;
-					case "SOLVER":
-						subItemHead[0x00] = 0x03;
-						break;
-					case "MATRIX":
-						subItemHead[0x02] = 0x01;
-						subItemHead[0x11] = (byte)'A';
-						break;
-					default:
-						throw new NotImplementedException(string.Format("Group file type '{0}' not supported.", groupFileName));
-				}
-				subItemHead[3] = (byte)(subItemBody.Length >> 0);
-				subItemHead[4] = (byte)(subItemBody.Length >> 8);
+				if (groupFileName == "MATRIX") {
 
-				subItems.Add(new LinkTransfer(subItemHead, subItemBody));
+					// Matrices are handled differently to all other variable types, and stored backwards
+					for (int offset = subItemBody.Length; offset > 12;) {
+
+						var matrixRows = MatrixVariable.DecodeBcd((ushort)(subItemBody[offset - 3] + (subItemBody[offset - 4] << 8)));
+						var matrixCols = MatrixVariable.DecodeBcd((ushort)(subItemBody[offset - 5] + (subItemBody[offset - 6] << 8)));
+
+						var matrixDataSize = matrixRows * matrixCols * RealNumber.SizeInBytes;
+						var matrixTotalSize = checked((ushort)(matrixDataSize + 6));
+
+						// Generate a new matrix head
+						var matrixItemHead = new byte[32];
+
+						matrixItemHead[0x02] = 0x01;
+						matrixItemHead[0x03] = (byte)(matrixTotalSize >> 0);
+						matrixItemHead[0x04] = (byte)(matrixTotalSize >> 8);
+
+						matrixItemHead[0x10] = subItemBody[offset - 2];
+						matrixItemHead[0x11] = subItemBody[offset - 1];
+						matrixItemHead[0x12] = subItemBody[offset - 6];
+						matrixItemHead[0x13] = subItemBody[offset - 5];
+						matrixItemHead[0x14] = subItemBody[offset - 4];
+						matrixItemHead[0x15] = subItemBody[offset - 3];
+
+
+						// Copy the matrix body
+						var matrixItemBody  = new byte[matrixTotalSize];
+						offset -= matrixTotalSize;
+						Array.Copy(subItemBody, offset, matrixItemBody, 0, matrixTotalSize);
+
+						subItems.Add(new LinkTransfer(matrixItemHead, matrixItemBody));
+					}
+
+				} else {
+
+					// Generate the subitem's head
+					var subItemHead = new byte[32];
+					switch (groupFileName) {
+						case "GRAPH":
+							subItemHead[0x00] = 0x01;
+							break;
+						case "PROGRAM":
+							subItemHead[0x00] = 0x02;
+							break;
+						case "SOLVER":
+							subItemHead[0x00] = 0x03;
+							break;
+						default:
+							throw new NotImplementedException(string.Format("Group file type '{0}' not supported.", groupFileName));
+					}
+					subItemHead[0x03] = (byte)(subItemBody.Length >> 0);
+					subItemHead[0x04] = (byte)(subItemBody.Length >> 8);
+
+					subItems.Add(new LinkTransfer(subItemHead, subItemBody));
+				}
 
 				previousVariableSize = nextVariableSize;
 			}

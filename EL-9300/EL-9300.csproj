@@ -55,6 +55,7 @@
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
+    <Compile Include="MatrixTypes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramEditor.cs">
       <SubType>Form</SubType>
@@ -70,6 +71,7 @@
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RealNumber.cs" />
     <Compile Include="Symbols.cs" />
     <Compile Include="Tokeniser.cs" />
     <EmbeddedResource Include="Main.resx">
