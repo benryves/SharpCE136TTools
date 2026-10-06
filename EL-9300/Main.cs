@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Ports;
 using System.Windows.Forms;
@@ -539,6 +540,14 @@ namespace Sharp.EL9300 {
 
 		IEditorForm ActiveEditor { get => ActiveMdiChild as IEditorForm; }
 
+		private void ProgramToolStripMenuItem_Click(object sender, EventArgs e) {
+			var editor = new ProgramEditor {
+				MdiParent = this
+			};
+			editor.FormClosing += Editor_FormClosing;
+			editor.Show();
+		}
+
 		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
 			openFileDialog.Filter = "EL-9300 Program (*.g1p)|*.g1p";
 			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
@@ -570,6 +579,9 @@ namespace Sharp.EL9300 {
 		private bool Save() {
 			var editor = ActiveEditor;
 			if (editor != null) {
+				// Quick validation check
+				if (editor is Form form && !form.ValidateChildren()) return false;
+				// Proceed to try saving the editor
 				var filename = editor.FileName;
 				if (string.IsNullOrEmpty(filename)) {
 					return SaveAs();
@@ -591,6 +603,9 @@ namespace Sharp.EL9300 {
 		private bool SaveAs() {
 			var editor = ActiveEditor;
 			if (editor != null) {
+				// Quick validation check
+				if (editor is Form form && !form.ValidateChildren()) return false;
+				// Proceed to try saving the editor
 				saveFileDialog.Filter = editor.FileDialogFilter;
 				saveFileDialog.FileName = editor.FileDialogFileName;
 				while (saveFileDialog.ShowDialog(this) == DialogResult.OK) {
@@ -631,6 +646,67 @@ namespace Sharp.EL9300 {
 			SaveAs();
 		}
 
+		#endregion
+
+		#region MDI
+
+		private readonly List<ToolStripItem> mdiWindowToolStripItems = new List<ToolStripItem>();
+
+		private void WindowToolStripMenuItem_DropDownOpening(object sender, EventArgs e) {
+
+			foreach (var item in mdiWindowToolStripItems) {
+				windowToolStripMenuItem.DropDownItems.Remove(item);
+				item.Dispose();
+			}
+			mdiWindowToolStripItems.Clear();
+
+			if (MdiChildren.Length > 0) {
+				
+				var separator = new ToolStripSeparator();
+				mdiWindowToolStripItems.Add(separator);
+				windowToolStripMenuItem.DropDownItems.Add(separator);
+
+				foreach (var child in MdiChildren) {
+					var item = new ToolStripMenuItem((mdiWindowToolStripItems.Count < 10 ? ("&" + mdiWindowToolStripItems.Count.ToString(CultureInfo.InvariantCulture) + " ") : "") + child.Text) {
+						Tag = child,
+						Checked = child == ActiveMdiChild
+					};
+					item.Click += MdiWindowItem_Click;
+					mdiWindowToolStripItems.Add(item);
+					windowToolStripMenuItem.DropDownItems.Add(item);
+				}
+				
+			}
+		}
+
+		private void MdiWindowItem_Click(object sender, EventArgs e) {
+			if (sender is ToolStripMenuItem toolStripMenuItem && toolStripMenuItem.Tag is Form form) {
+				ActivateMdiChild(form);
+				form.Focus();
+			}
+		}
+
+		private void ArrangeIconsToolStripMenuItem_Click(object sender, EventArgs e) {
+			LayoutMdi(MdiLayout.ArrangeIcons);
+		}
+
+		private void CascadeToolStripMenuItem_Click(object sender, EventArgs e) {
+			LayoutMdi(MdiLayout.Cascade);
+		}
+
+		private void HorizontalToolStripMenuItem_Click(object sender, EventArgs e) {
+			LayoutMdi(MdiLayout.TileHorizontal);
+		}
+
+		private void VerticalToolStripMenuItem_Click(object sender, EventArgs e) {
+			LayoutMdi(MdiLayout.TileVertical);
+		}
+
+		private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e) {
+			foreach (var item in MdiChildren) {
+				item.Close();
+			}
+		}
 
 		#endregion
 

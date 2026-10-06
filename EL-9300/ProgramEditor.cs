@@ -1,5 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace Sharp.EL9300 {
@@ -10,6 +12,8 @@ namespace Sharp.EL9300 {
 			foreach (ProgramMode mode in Enum.GetValues(typeof(ProgramMode))) {
 				programTypeComboBox.Items.Add(mode);
 			}
+			ProgramMode = ProgramMode.Real;
+			Dirty = false;
 			UpdateText();
 		}
 
@@ -82,6 +86,43 @@ namespace Sharp.EL9300 {
 
 		private void ProgramTypeComboBox_SelectedIndexChanged(object sender, EventArgs e) {
 			Dirty = true;
+		}
+
+
+		#endregion
+
+		#region Validation
+
+		private void ProgramNameTextBox_Validating(object sender, CancelEventArgs e) {
+			if (programNameTextBox.Text.Length < 1) {
+				MessageBox.Show(this, "Please enter a program name.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				e.Cancel = true;
+			} else if (programNameTextBox.Text.Length > 16) {
+				MessageBox.Show(this, "The program name is too long.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				e.Cancel = true;
+			} else if (Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(programNameTextBox.Text)) != programNameTextBox.Text) {
+				MessageBox.Show(this, "The program name contains invalid characters.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				e.Cancel = true;
+			}
+			if (e.Cancel) {
+				programNameTextBox.SelectAll();
+				programNameTextBox.Focus();
+			}
+		}
+
+		private void ProgramCodeTextBox_Validating(object sender, CancelEventArgs e) {
+			for (int i = 0; i < programCodeTextBox.Lines.Length; ++i) {
+				try {
+					Tokeniser.GetBytes(ProgramMode, programCodeTextBox.Lines[i]);
+				} catch (Exception ex) {
+					programCodeTextBox.Select(programCodeTextBox.GetFirstCharIndexFromLine(i), programCodeTextBox.Lines[i].TrimEnd().Length);
+					programCodeTextBox.ScrollToCaret();
+					programNameTextBox.Focus();
+					MessageBox.Show(this, string.Format("Line {0}: {1}", i + 1, ex.Message), Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+					e.Cancel = true;
+					return;
+				}
+			}
 		}
 
 		#endregion
