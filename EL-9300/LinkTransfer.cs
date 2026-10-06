@@ -190,7 +190,6 @@ namespace Sharp.EL9300 {
 						matrixItemHead[0x03] = (byte)(matrixTotalSize >> 0);
 						matrixItemHead[0x04] = (byte)(matrixTotalSize >> 8);
 
-						matrixItemHead[0x10] = subItemBody[offset - 2];
 						matrixItemHead[0x11] = subItemBody[offset - 1];
 						matrixItemHead[0x12] = subItemBody[offset - 6];
 						matrixItemHead[0x13] = subItemBody[offset - 5];

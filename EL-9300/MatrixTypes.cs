@@ -3,9 +3,19 @@ using System.IO;
 using System.Text;
 
 namespace Sharp.EL9300 {
+
+	[Flags]
+	public enum MatrixMode : byte {
+		None = 0x00,
+		Statistics = 0x20,
+		Weighted = 0x40,
+	}
+
 	public class MatrixVariable {
 
 		public char Name { get; set; }
+
+		public MatrixMode Mode { get; set; }
 
 		private RealNumber[,] items;
 		public RealNumber[,] Items {
@@ -50,8 +60,10 @@ namespace Sharp.EL9300 {
 
 			// Pull the data from the body
 			var matrixName = Encoding.ASCII.GetString(transfer.Body, transfer.Body.Length - 1, 1)[0];
+			var matrixMode = (MatrixMode)transfer.Body[transfer.Body.Length - 2];
 			var matrixRows = DecodeBcd((ushort)(transfer.Body[transfer.Body.Length - 3] + (transfer.Body[transfer.Body.Length - 4] << 8)));
 			var matrixCols = DecodeBcd((ushort)(transfer.Body[transfer.Body.Length - 5] + (transfer.Body[transfer.Body.Length - 6] << 8)));
+			
 
 			// Check this matches the head
 			if (transfer.Head[0x11] != transfer.Body[transfer.Body.Length - 1]) throw new InvalidDataException("Matrix name count does not match between head and body.");
@@ -60,6 +72,7 @@ namespace Sharp.EL9300 {
 
 			// Name and allocate 
 			Name = matrixName;
+			Mode = matrixMode;
 			Items = new RealNumber[matrixRows, matrixCols];
 
 			// Populate the item array
