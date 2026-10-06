@@ -66,10 +66,23 @@ namespace Sharp.EL9300 {
 		}
 
 		public void Open(LinkTransfer transfer) {
-			var programFile = new ProgramVariable(transfer);
-			ProgramLines = Array.ConvertAll(programFile.Lines, l => Symbols.FromPlainText(Tokeniser.GetString(l)));
-			ProgramMode = programFile.Mode;
-			ProgramName = programFile.Name;
+			try {
+				var programFile = new ProgramVariable(transfer);
+				ProgramLines = Array.ConvertAll(programFile.Lines, l => Symbols.FromPlainText(Tokeniser.GetString(l)));
+				ProgramMode = programFile.Mode;
+				ProgramName = programFile.Name;
+			} catch {
+				var matrixFile = new MatrixVariable(transfer);
+				ProgramMode = ProgramMode.Matrix;
+				ProgramName = matrixFile.ToString();
+				var matrixData = new StringBuilder(256);
+				for (int col = 0; col < matrixFile.ColumnCount; ++col) {
+					for (int row = 0; row < matrixFile.RowCount; ++row) {
+						matrixData.AppendLine(string.Format("{0}[{1},{2}]={3}", matrixFile.Name, row + 1, col + 1, matrixFile.Items[row, col]));
+					}
+				}
+				ProgramCode = matrixData.ToString();
+			}
 		}
 
 		#endregion

@@ -549,7 +549,7 @@ namespace Sharp.EL9300 {
 		}
 
 		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
-			openFileDialog.Filter = "EL-9300 Program (*.g1p)|*.g1p";
+			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1m)|*.g1p;*.g1m|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Matrix (*.g1m)|*.g1m";
 			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
 				try {
 

@@ -56,7 +56,7 @@ namespace Sharp.EL9300 {
 
 		public ProgramVariable(LinkTransfer transfer) {
 
-			if (transfer.Head[0] != 2 || transfer.Head[1] != 0) throw new InvalidOperationException("File is not an EL-9300 program.");
+			if (transfer.Head[0] != 2 || transfer.Head[1] != 0) throw new InvalidDataException("File is not an EL-9300 program.");
 
 			var stream = new MemoryStream(transfer.Body);
 			var reader = new BinaryReader(stream);
@@ -68,9 +68,9 @@ namespace Sharp.EL9300 {
 			if (reader.ReadByte() != 0) throw new InvalidDataException();
 
 			// End of file?
-			if (variableSize == 0) throw new InvalidOperationException();
+			if (variableSize == 0) throw new InvalidDataException();
 
-			if (reader.ReadByte() != 0) throw new InvalidOperationException();
+			if (reader.ReadByte() != 0) throw new InvalidDataException();
 
 
 			if (reader.ReadByte() != 0x09) throw new InvalidDataException();
