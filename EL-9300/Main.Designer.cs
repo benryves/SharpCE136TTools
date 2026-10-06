@@ -51,6 +51,9 @@
 			this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+			this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.groupFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.ungroupFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.statusStrip.SuspendLayout();
 			this.menuStrip.SuspendLayout();
 			this.SuspendLayout();
@@ -77,6 +80,7 @@
 			this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.linkToolStripMenuItem,
+            this.toolsToolStripMenuItem,
             this.optionsToolStripMenuItem,
             this.windowToolStripMenuItem});
 			this.menuStrip.Location = new System.Drawing.Point(0, 0);
@@ -266,6 +270,29 @@
 			this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.BackgroundWorker_ProgressChanged);
 			this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.BackgroundWorker_RunWorkerCompleted);
 			// 
+			// toolsToolStripMenuItem
+			// 
+			this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.groupFilesToolStripMenuItem,
+            this.ungroupFilesToolStripMenuItem});
+			this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+			this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+			this.toolsToolStripMenuItem.Text = "&Tools";
+			// 
+			// groupFilesToolStripMenuItem
+			// 
+			this.groupFilesToolStripMenuItem.Enabled = false;
+			this.groupFilesToolStripMenuItem.Name = "groupFilesToolStripMenuItem";
+			this.groupFilesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.groupFilesToolStripMenuItem.Text = "&Group Files...";
+			// 
+			// ungroupFilesToolStripMenuItem
+			// 
+			this.ungroupFilesToolStripMenuItem.Name = "ungroupFilesToolStripMenuItem";
+			this.ungroupFilesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.ungroupFilesToolStripMenuItem.Text = "&Ungroup Files...";
+			this.ungroupFilesToolStripMenuItem.Click += new System.EventHandler(this.UngroupFilesToolStripMenuItem_Click);
+			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -318,6 +345,9 @@
 		private System.Windows.Forms.ToolStripMenuItem verticalToolStripMenuItem;
 		private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
 		private System.Windows.Forms.ToolStripMenuItem closeAllToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem groupFilesToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem ungroupFilesToolStripMenuItem;
 	}
 }
 

@@ -710,5 +710,23 @@ namespace Sharp.EL9300 {
 
 		#endregion
 
+		#region Grouping/Ungrouping
+
+		private void UngroupFilesToolStripMenuItem_Click(object sender, EventArgs e) {
+			openFileDialog.Filter = GetFileDialogFilter(true, null);
+			if (openFileDialog.ShowDialog() == DialogResult.OK) {
+				var groupFile = new LinkTransfer(openFileDialog.FileName);
+				foreach (var item in groupFile.GetSubItems()) {
+					saveFileDialog.Filter = GetFileDialogFilter(false, item.GetFileName());
+					saveFileDialog.FileName = item.GetFileName();
+					if (saveFileDialog.ShowDialog(this) == DialogResult.OK) {
+						item.Save(saveFileDialog.FileName);
+					}
+				}
+			}
+		}
+
+		#endregion
+
 	}
 }

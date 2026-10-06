@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -86,6 +87,112 @@ namespace Sharp.EL9300 {
 				default:
 					return null;
 			}
+		}
+
+		public bool HasSubItems {
+			get {
+				// Body must start 0xFB <file name>
+				if (body.Length < 32 || body[0x00] != 0xFB) return false;
+				// Check head
+				switch (head[0x00]) {
+					case 0: // Matrices, stats
+						return head[0x11] == 0xFF;
+					case 1: // Graph equations
+					case 2: // Programs
+					case 3: // Solver equations
+						return head[0x02] == 0x01;
+					case 4: // Backups
+						return true;
+					default:
+						return false;
+				}
+
+			}
+		}
+
+		public LinkTransfer[] GetSubItems() {
+			
+			if (!HasSubItems) throw new InvalidOperationException("This file does not have any sub-items.");
+			var subItems = new List<LinkTransfer>();
+
+			var stream = new MemoryStream(body);
+			var reader = new BinaryReader(stream);
+
+			if (reader.ReadByte() != 0xFB) throw new InvalidDataException("The file is not a valid group.");
+
+			var groupFileName = Encoding.ASCII.GetString(reader.ReadBytes(8)).TrimEnd(' ');
+			var groupFileExtension = Encoding.ASCII.GetString(reader.ReadBytes(4)).TrimEnd(' ');
+
+			if (reader.ReadInt32() != 0) throw new InvalidDataException();
+
+			var totalSize = reader.ReadUInt16();
+			
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+
+			if (reader.ReadUInt16() != totalSize) throw new InvalidDataException(string.Format("Size records do not agree ({0}).", totalSize));
+
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+
+			if (reader.ReadUInt16() != totalSize) throw new InvalidDataException(string.Format("Size records do not agree ({0}).", totalSize));
+
+
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+
+			if (reader.ReadUInt16() != 0) throw new InvalidDataException();
+			if (reader.ReadUInt16() != 0) throw new InvalidDataException();
+			if (reader.ReadUInt16() != 0) throw new InvalidDataException();
+
+			if (reader.ReadByte() != 0xFF) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x09) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x29) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+
+			ushort previousVariableSize = 0;
+
+			for (; ; ) {
+				// Variable sizes
+				ushort nextVariableSize = reader.ReadUInt16();
+				if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+				if (reader.ReadUInt16() != previousVariableSize) throw new InvalidDataException();
+				if (reader.ReadByte() != 0x00) throw new InvalidDataException();
+				if (nextVariableSize == 0) break;
+
+				// Read the subitem's body
+				stream.Seek(-6, SeekOrigin.Current);
+				var subItemBody = reader.ReadBytes(nextVariableSize);
+
+				// Generate the subitem's head
+				var subItemHead = new byte[32];
+				switch (groupFileName) {
+					case "GRAPH":
+						subItemHead[0x00] = 0x01;
+						break;
+					case "PROGRAM":
+						subItemHead[0x00] = 0x02;
+						break;
+					case "SOLVER":
+						subItemHead[0x00] = 0x03;
+						break;
+					case "MATRIX":
+						subItemHead[0x02] = 0x01;
+						subItemHead[0x11] = (byte)'A';
+						break;
+					default:
+						throw new NotImplementedException(string.Format("Group file type '{0}' not supported.", groupFileName));
+				}
+				subItemHead[3] = (byte)(subItemBody.Length >> 0);
+				subItemHead[4] = (byte)(subItemBody.Length >> 8);
+
+				subItems.Add(new LinkTransfer(subItemHead, subItemBody));
+
+				previousVariableSize = nextVariableSize;
+			}
+			return subItems.ToArray();
 		}
 	}
 }
