@@ -507,7 +507,7 @@ namespace Sharp.EL9300 {
 
 
 		private void LinkToolStripMenuItem_DropDownOpening(object sender, EventArgs e) {
-			sendToolStripMenuItem.Enabled = sendToolStripMenuItem.Enabled = InterfaceIsOn();
+			sendToolStripMenuItem.Enabled = receiveToolStripMenuItem.Enabled = InterfaceIsOn();
 		}
 
 		private void SendToolStripMenuItem_Click(object sender, EventArgs e) {
