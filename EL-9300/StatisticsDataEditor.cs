@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 
 namespace Sharp.EL9300 {
@@ -24,6 +22,7 @@ namespace Sharp.EL9300 {
 						dataGridView.Columns["Y"].Visible = variableCount > 1;
 						oneVarRadioButton.Checked = variableCount == 1;
 						twoVarRadioButton.Checked = variableCount == 2;
+						Dirty = true;
 					}
 				}
 			}
@@ -49,6 +48,7 @@ namespace Sharp.EL9300 {
 					variableWeighted = value;
 					dataGridView.Columns["W"].Visible = variableWeighted;
 					weightedVarCheckBox.Checked = variableWeighted;
+					Dirty = true;
 				}
 			}
 		}
@@ -77,10 +77,53 @@ namespace Sharp.EL9300 {
 				dataGridView.Columns[column].SortMode = DataGridViewColumnSortMode.NotSortable;
 			}
 
+			// Initialise suitable defaults
 			VariableCount = 1;
 			VariableWeighted = false;
 
+			// Clear the dirty flag
+			Dirty = false;
+
 		}
+
+		#region Data Grid
+
+		private void DataGridView_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e) {
+			if (sender is DataGridView grid) {
+				string rowIndex = (e.RowIndex + 1).ToString(CultureInfo.InvariantCulture);
+
+				if (dataGridView.Rows[e.RowIndex].IsNewRow) return;
+
+				var centerFormat = new StringFormat() {
+					Alignment = StringAlignment.Far,
+					LineAlignment = StringAlignment.Center
+				};
+
+				var textSize = TextRenderer.MeasureText(rowIndex, grid.Font);
+				if (grid.RowHeadersWidth < textSize.Width + 20)
+					grid.RowHeadersWidth = textSize.Width + 20;
+
+				var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth - 4, e.RowBounds.Height);
+
+				e.Graphics.DrawString(rowIndex, grid.Font, SystemBrushes.ControlText, headerBounds, centerFormat);
+			}
+		}
+
+
+		private void DataGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e) {
+			if (dataGridView.Rows[e.RowIndex].IsNewRow && string.IsNullOrEmpty(e.FormattedValue as string)) {
+				return;
+			} else if (!RealNumber.TryParse(e.FormattedValue as string, out _)) {
+				MessageBox.Show(this, "Please enter a valid numeric value.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				e.Cancel = true;
+			}
+		}
+
+		private void DataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e) {
+			Dirty = true;
+		}
+
+		#endregion
 
 		#region IEditorForm
 
