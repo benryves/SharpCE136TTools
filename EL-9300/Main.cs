@@ -540,35 +540,56 @@ namespace Sharp.EL9300 {
 
 		IEditorForm ActiveEditor { get => ActiveMdiChild as IEditorForm; }
 
-		private void ProgramToolStripMenuItem_Click(object sender, EventArgs e) {
-			var editor = new ProgramEditor {
-				MdiParent = this
-			};
+		private void ShowEditor(Form editor) {
+			editor.MdiParent = this;
 			editor.FormClosing += Editor_FormClosing;
 			editor.Show();
 		}
 
+		private void NewProgramToolStripMenuItem_Click(object sender, EventArgs e) {
+			ShowEditor(new ProgramEditor());
+		}
+
+		private void NewStatisticsDataToolStripMenuItem_Click(object sender, EventArgs e) {
+			ShowEditor(new StatisticsDataEditor());
+		}
+
 		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
-			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1m)|*.g1p;*.g1m|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Matrix (*.g1m)|*.g1m";
+			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1l;*.g1m)|*.g1p;*.g1l;*.g1m|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Statistics Data (*.g1l)|*.g1l|EL-9300 Matrix (*.g1m)|*.g1m";
 			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
 				try {
 
-					var programTransfer = new LinkTransfer(openFileDialog.FileName);
+					var linkTransfer = new LinkTransfer(openFileDialog.FileName);
 
-					var editor = new ProgramEditor {
-						MdiParent = this,
-						FileName = openFileDialog.FileName,
-					};
-					try {
-						editor.Open(programTransfer);
-						editor.Dirty = false;
-					} catch {
-						editor.Dispose();
-						throw;
+					IEditorForm editor = null;
+
+					switch (linkTransfer.Head[0x00]) {
+						case 0: // Matrix
+							if (linkTransfer.Head[0x11] == 0x40) {
+								editor = new StatisticsDataEditor { FileName = openFileDialog.FileName };
+							} else {
+								editor = new ProgramEditor { FileName = openFileDialog.FileName };
+							}
+							break;
+						case 2: // Program
+							editor = new ProgramEditor { FileName = openFileDialog.FileName };
+							break;
 					}
 
-					editor.FormClosing += Editor_FormClosing;
-					editor.Show();
+					if (editor == null) {
+						throw new NotSupportedException("Unsupported file type.");
+					} else if (editor is Form editorForm) {
+						try {
+							editor.Open(linkTransfer);
+							editor.Dirty = false;
+						} catch {
+							editorForm.Dispose();
+							throw;
+						}
+						ShowEditor(editorForm);
+					} else {
+						throw new NotSupportedException("File type editor can't be displayed.");
+					}
 
 				} catch (Exception ex) {
 					MessageBox.Show(this, "Could not open '" + Path.GetFileName(openFileDialog.FileName) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
