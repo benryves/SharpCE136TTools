@@ -123,6 +123,14 @@ namespace Sharp.EL9300 {
 			Dirty = true;
 		}
 
+		private void DataGridView_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e) {
+			if (e.Row != null) {
+				e.Row.Cells["X"].Value = (RealNumber)0;
+				e.Row.Cells["Y"].Value = (RealNumber)0;
+				e.Row.Cells["W"].Value = (RealNumber)1;
+			}
+		}
+
 		#endregion
 
 		#region IEditorForm
@@ -146,6 +154,10 @@ namespace Sharp.EL9300 {
 		public string FileDialogFileName => "DATA";
 
 		public LinkTransfer Save() {
+
+			// Ensure any pending changes are committed
+			dataGridView.CommitEdit(DataGridViewDataErrorContexts.Commit);
+
 			var dataTable = (DataTable)dataGridView.DataSource;
 
 			// Convert the data to a matrix
@@ -186,15 +198,14 @@ namespace Sharp.EL9300 {
 			// Stats data has one column per card
 			for (int col = 0; col < matrix.ColumnCount; ++col) {
 				var dataRow = dataTable.Rows.Add();
-				dataRow.ItemArray = Array.ConvertAll(matrix.GetColumn(col), n => (object)n);
+				var items = new object[] { (RealNumber)0, (RealNumber)0, (RealNumber)1 };
+				for (int row = 0; row < matrix.RowCount; ++row) {
+					items[row] = matrix.Items[row, col];
+				}
+				dataRow.ItemArray = items;
 			}
 		}
 
 		#endregion
-
-
-
-
-
 	}
 }
