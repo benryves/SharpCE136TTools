@@ -144,6 +144,7 @@ namespace Sharp.EL9300 {
 		public static explicit operator double(RealNumber number) => (number.IsNegative ? -1 : +1) * (double)number.Mantissa * Math.Pow(10d, number.Exponent - 13);
 
 		public static explicit operator RealNumber(double number) {
+			if (number == 0) return Zero;
 			
 			// Get the flags
 			RealNumberFlags flags = RealNumberFlags.None;
@@ -156,7 +157,7 @@ namespace Sharp.EL9300 {
 			int exponent = (int)Math.Floor(Math.Log10(number));
 			ulong mantissa = (ulong)Math.Round(number * Math.Pow(10d, 13 - exponent));
 
-			return new RealNumber { Flags = flags, Mantissa = mantissa, Exponent = exponent };
+			return new RealNumber(mantissa, exponent, flags);
 		}
 
 
@@ -215,9 +216,12 @@ namespace Sharp.EL9300 {
 				// Exponent sign
 				var exponent = Exponent;
 				if (exponent < 0) {
-					exponent = -exponent;
+					exponent = checked(-exponent);
 					result.Append("-");
 				}
+
+				// Sanity check for exponent
+				if (exponent > 999) throw new InvalidOperationException(string.Format("Exponent {0} is out of range.", Exponent));
 
 				// Exponent digits
 				var exponentDigit = exponent / 100;
@@ -360,7 +364,7 @@ namespace Sharp.EL9300 {
 			}
 
 			// Is the result zero?
-			if (mantissa == 0) return RealNumber.Zero;
+			if (mantissa == 0) return Zero;
 
 			// Decode the exponent
 			int exponent = 0;
@@ -394,7 +398,7 @@ namespace Sharp.EL9300 {
 		
 		public static bool TryParse(string s, out RealNumber result) {
 			try {
-				result = RealNumber.Parse(s);
+				result = Parse(s);
 				return true;
 			} catch {
 				result = default;
