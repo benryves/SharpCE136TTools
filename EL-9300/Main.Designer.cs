@@ -29,6 +29,7 @@
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.newProgramToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.newStatisticsDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,7 +55,7 @@
 			this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
-			this.newStatisticsDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.newMatrixToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.statusStrip.SuspendLayout();
 			this.menuStrip.SuspendLayout();
 			this.SuspendLayout();
@@ -107,6 +108,7 @@
 			// 
 			this.newToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newProgramToolStripMenuItem,
+            this.newMatrixToolStripMenuItem,
             this.newStatisticsDataToolStripMenuItem});
 			this.newToolStripMenuItem.Name = "newToolStripMenuItem";
 			this.newToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
@@ -118,6 +120,13 @@
 			this.newProgramToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.newProgramToolStripMenuItem.Text = "&Program";
 			this.newProgramToolStripMenuItem.Click += new System.EventHandler(this.NewProgramToolStripMenuItem_Click);
+			// 
+			// newStatisticsDataToolStripMenuItem
+			// 
+			this.newStatisticsDataToolStripMenuItem.Name = "newStatisticsDataToolStripMenuItem";
+			this.newStatisticsDataToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.newStatisticsDataToolStripMenuItem.Text = "Statistics &Data";
+			this.newStatisticsDataToolStripMenuItem.Click += new System.EventHandler(this.NewStatisticsDataToolStripMenuItem_Click);
 			// 
 			// openToolStripMenuItem
 			// 
@@ -295,12 +304,12 @@
 			this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.BackgroundWorker_ProgressChanged);
 			this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.BackgroundWorker_RunWorkerCompleted);
 			// 
-			// newStatisticsDataToolStripMenuItem
+			// newMatrixToolStripMenuItem
 			// 
-			this.newStatisticsDataToolStripMenuItem.Name = "newStatisticsDataToolStripMenuItem";
-			this.newStatisticsDataToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-			this.newStatisticsDataToolStripMenuItem.Text = "Statistics &Data";
-			this.newStatisticsDataToolStripMenuItem.Click += new System.EventHandler(this.NewStatisticsDataToolStripMenuItem_Click);
+			this.newMatrixToolStripMenuItem.Name = "newMatrixToolStripMenuItem";
+			this.newMatrixToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.newMatrixToolStripMenuItem.Text = "&Matrix";
+			this.newMatrixToolStripMenuItem.Click += new System.EventHandler(this.NewMatrixToolStripMenuItem_Click);
 			// 
 			// Main
 			// 
@@ -358,6 +367,7 @@
 		private System.Windows.Forms.ToolStripMenuItem groupFilesToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem ungroupFilesToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem newStatisticsDataToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem newMatrixToolStripMenuItem;
 	}
 }
 

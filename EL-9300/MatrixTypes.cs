@@ -66,9 +66,13 @@ namespace Sharp.EL9300 {
 			return checked((ushort)((((value / 1) % 10) << 0) | (((value / 10) % 10) << 4) | (((value / 100) % 10) << 8) | (((value / 1000) % 10) << 12)));
 		}
 
-		public MatrixVariable(char name, int rowCount, int columnCount) {
+		public MatrixVariable(char name, int rowCount, int columnCount)
+			: this(name, new RealNumber[rowCount, columnCount]) {
+		}
+
+		public MatrixVariable(char name, RealNumber[,] items) {
 			Name = name;
-			Items = new RealNumber[rowCount, columnCount];
+			Items = items;
 		}
 
 		public MatrixVariable(LinkTransfer transfer) {

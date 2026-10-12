@@ -550,6 +550,11 @@ namespace Sharp.EL9300 {
 			ShowEditor(new ProgramEditor());
 		}
 
+
+		private void NewMatrixToolStripMenuItem_Click(object sender, EventArgs e) {
+			ShowEditor(new MatrixEditor());
+		}
+
 		private void NewStatisticsDataToolStripMenuItem_Click(object sender, EventArgs e) {
 			ShowEditor(new StatisticsDataEditor());
 		}
@@ -566,9 +571,10 @@ namespace Sharp.EL9300 {
 					switch (linkTransfer.Head[0x00]) {
 						case 0: // Matrix
 							if (linkTransfer.Head[0x11] == 0x40) {
+								// Matrix named '@' is statistics data
 								editor = new StatisticsDataEditor { FileName = openFileDialog.FileName };
 							} else {
-								editor = new ProgramEditor { FileName = openFileDialog.FileName };
+								editor = new MatrixEditor { FileName = openFileDialog.FileName };
 							}
 							break;
 						case 2: // Program
