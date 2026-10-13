@@ -16,7 +16,12 @@ namespace Sharp.EL9300 {
 			}
 			matrixNameComboBox.SelectedIndex = 0;
 
+			// Set a suitable default matrix
 			MatrixItems = new RealNumber[1, 1];
+
+			// Prevent mouse wheel from affecting dimensions
+			matrixRowCountUpDown.MouseWheel += MatrixDimensionCountUpDown_MouseWheel;
+			matrixColumnCountUpDown.MouseWheel += MatrixDimensionCountUpDown_MouseWheel;
 
 			// Clear dirty flag
 			Dirty = false;
@@ -38,7 +43,7 @@ namespace Sharp.EL9300 {
 			get {
 				var rowCount = 0;
 				foreach (DataGridViewRow row in dataGridView.Rows) {
-					if (!row.IsNewRow) ++rowCount;
+					if (!row.IsNewRow && row.Visible) ++rowCount;
 				}
 				return rowCount;
 			}
@@ -54,10 +59,26 @@ namespace Sharp.EL9300 {
 								dataTable.Rows.Add();
 							}
 
-							// Remove old rows as required
-							while (MatrixRowCount > value) {
-								dataTable.Rows.RemoveAt(MatrixRowCount - 1);
+							// Ensure all rows are visible
+							for (int rowIndex = MatrixRowCount; rowIndex < value; ++rowIndex) {
+								dataGridView.Rows[rowIndex].Visible = true;
 							}
+
+							// Hiding selected rows throws an exception from the CurrencyManager binding, so temporarily suspend binding
+							var currencyManager = BindingContext[dataTable] as CurrencyManager;
+							currencyManager?.SuspendBinding();
+							
+							// Hide old rows as required
+							while (MatrixRowCount > value) {
+								dataGridView.Rows[MatrixRowCount - 1].Visible = false;
+							}
+
+							// Resume binding with the currency manager
+							currencyManager?.ResumeBinding();
+
+							// Update row count box
+							matrixRowCountUpDown.Value = MatrixRowCount;
+
 						} finally {
 							updatingRows = false;
 						}
@@ -69,7 +90,13 @@ namespace Sharp.EL9300 {
 
 		bool updatingColumns = false;
 		public int MatrixColumnCount {
-			get => dataGridView.ColumnCount;
+			get {
+				var columnCount = 0;
+				foreach (DataGridViewColumn column in dataGridView.Columns) {
+					if (column.Visible) ++columnCount;
+				}
+				return columnCount;
+			}
 			set {
 				if (!updatingColumns && dataGridView.DataSource is DataTable dataTable) {
 					dataGridView.CommitEdit(DataGridViewDataErrorContexts.Commit);
@@ -85,10 +112,18 @@ namespace Sharp.EL9300 {
 								dataGridView.Columns[column].SortMode = DataGridViewColumnSortMode.NotSortable;
 							}
 
-							// Remove old columns as required
-							while (dataGridView.Columns.Count > value) {
-								dataTable.Columns.RemoveAt(dataGridView.Columns.Count - 1);
+							// Ensure all columns are visible
+							for (int columnIndex = MatrixColumnCount; columnIndex < value; ++columnIndex) {
+								dataGridView.Columns[columnIndex].Visible = true;
 							}
+
+							// Remove old columns as required
+							while (MatrixColumnCount > value) {
+								dataGridView.Columns[MatrixColumnCount - 1].Visible = false;
+							}
+
+							// Update column count box
+							matrixColumnCountUpDown.Value = MatrixColumnCount;
 
 						} finally {
 							updatingColumns = false;
@@ -145,6 +180,10 @@ namespace Sharp.EL9300 {
 				for (int column = 0; column < dataGridView.ColumnCount; ++column) {
 					dataGridView.Columns[column].SortMode = DataGridViewColumnSortMode.NotSortable;
 				}
+
+				// Update row/column count boxes
+				matrixRowCountUpDown.Value = rowCount;
+				matrixColumnCountUpDown.Value = columnCount;
 
 				Dirty = true;
 
@@ -247,38 +286,6 @@ namespace Sharp.EL9300 {
 			}
 		}
 
-		
-		private void UpdateColumnCount() {
-			if (!updatingColumns) {
-				matrixColumnCountUpDown.Value = Math.Min(matrixColumnCountUpDown.Maximum, Math.Max(matrixColumnCountUpDown.Minimum, dataGridView.ColumnCount));
-			}
-		}
-
-		private void DataGridView_ColumnRemoved(object sender, DataGridViewColumnEventArgs e) {
-			UpdateColumnCount();
-		}
-
-		private void DataGridView_ColumnAdded(object sender, DataGridViewColumnEventArgs e) {
-			UpdateColumnCount();
-		}
-
-		void UpdateRowCount() {
-			if (!updatingRows) {
-				var rowCount = MatrixRowCount;
-				if (matrixRowCountUpDown.Value != rowCount) {
-					matrixRowCountUpDown.Value = Math.Min(matrixRowCountUpDown.Maximum, Math.Max(matrixRowCountUpDown.Minimum, rowCount));
-				}
-			}
-		}
-
-		private void DataGridView_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e) {
-			UpdateRowCount();
-		}
-
-		private void DataGridView_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e) {
-			UpdateRowCount();
-		}
-
 		private void MatrixRowCountUpDown_ValueChanged(object sender, EventArgs e) {
 			MatrixRowCount = (int)matrixRowCountUpDown.Value;
 		}
@@ -290,6 +297,12 @@ namespace Sharp.EL9300 {
 		private void MatrixNameComboBox_SelectedIndexChanged(object sender, EventArgs e) {
 			MatrixName = (char)matrixNameComboBox.SelectedItem;
 			Dirty = true;
+		}
+
+		private void MatrixDimensionCountUpDown_MouseWheel(object sender, MouseEventArgs e) {
+			if (e is HandledMouseEventArgs he) {
+				he.Handled = true;
+			}
 		}
 
 		#endregion

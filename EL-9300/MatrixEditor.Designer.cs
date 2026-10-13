@@ -51,7 +51,7 @@
 			this.matrixDimensionsGroupBox.Name = "matrixDimensionsGroupBox";
 			this.matrixDimensionsGroupBox.Padding = new System.Windows.Forms.Padding(3, 0, 3, 3);
 			this.matrixDimensionsGroupBox.Size = new System.Drawing.Size(144, 42);
-			this.matrixDimensionsGroupBox.TabIndex = 0;
+			this.matrixDimensionsGroupBox.TabIndex = 1;
 			this.matrixDimensionsGroupBox.TabStop = false;
 			this.matrixDimensionsGroupBox.Text = "Dimensions";
 			// 
@@ -82,9 +82,19 @@
             0,
             0,
             0});
+			this.matrixRowCountUpDown.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
 			this.matrixRowCountUpDown.Name = "matrixRowCountUpDown";
 			this.matrixRowCountUpDown.Size = new System.Drawing.Size(53, 20);
-			this.matrixRowCountUpDown.TabIndex = 2;
+			this.matrixRowCountUpDown.TabIndex = 0;
+			this.matrixRowCountUpDown.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
 			this.matrixRowCountUpDown.ValueChanged += new System.EventHandler(this.MatrixRowCountUpDown_ValueChanged);
 			// 
 			// matrixDimensionsLabel
@@ -93,7 +103,7 @@
 			this.matrixDimensionsLabel.Location = new System.Drawing.Point(62, 0);
 			this.matrixDimensionsLabel.Name = "matrixDimensionsLabel";
 			this.matrixDimensionsLabel.Size = new System.Drawing.Size(14, 26);
-			this.matrixDimensionsLabel.TabIndex = 0;
+			this.matrixDimensionsLabel.TabIndex = 1;
 			this.matrixDimensionsLabel.Text = "×";
 			this.matrixDimensionsLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
@@ -106,9 +116,19 @@
             0,
             0,
             0});
+			this.matrixColumnCountUpDown.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
 			this.matrixColumnCountUpDown.Name = "matrixColumnCountUpDown";
 			this.matrixColumnCountUpDown.Size = new System.Drawing.Size(53, 20);
 			this.matrixColumnCountUpDown.TabIndex = 1;
+			this.matrixColumnCountUpDown.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
 			this.matrixColumnCountUpDown.ValueChanged += new System.EventHandler(this.MatrixColumnCountUpDown_ValueChanged);
 			// 
 			// matrixNameGroupBox
@@ -118,7 +138,7 @@
 			this.matrixNameGroupBox.Location = new System.Drawing.Point(3, 3);
 			this.matrixNameGroupBox.Name = "matrixNameGroupBox";
 			this.matrixNameGroupBox.Size = new System.Drawing.Size(94, 42);
-			this.matrixNameGroupBox.TabIndex = 1;
+			this.matrixNameGroupBox.TabIndex = 0;
 			this.matrixNameGroupBox.TabStop = false;
 			this.matrixNameGroupBox.Text = "Name";
 			// 
@@ -164,15 +184,11 @@
 			this.dataGridView.Name = "dataGridView";
 			this.dataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
 			this.dataGridView.Size = new System.Drawing.Size(384, 213);
-			this.dataGridView.TabIndex = 5;
+			this.dataGridView.TabIndex = 1;
 			this.dataGridView.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.DataGridView_CellPainting);
 			this.dataGridView.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.DataGridView_CellValidating);
 			this.dataGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView_CellValueChanged);
-			this.dataGridView.ColumnAdded += new System.Windows.Forms.DataGridViewColumnEventHandler(this.DataGridView_ColumnAdded);
-			this.dataGridView.ColumnRemoved += new System.Windows.Forms.DataGridViewColumnEventHandler(this.DataGridView_ColumnRemoved);
 			this.dataGridView.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.DataGridView_RowPostPaint);
-			this.dataGridView.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.DataGridView_RowsAdded);
-			this.dataGridView.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.DataGridView_RowsRemoved);
 			// 
 			// matrixTypeTable
 			// 
@@ -190,7 +206,7 @@
 			this.matrixTypeTable.RowCount = 1;
 			this.matrixTypeTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
 			this.matrixTypeTable.Size = new System.Drawing.Size(250, 48);
-			this.matrixTypeTable.TabIndex = 4;
+			this.matrixTypeTable.TabIndex = 1;
 			// 
 			// MatrixEditor
 			// 
