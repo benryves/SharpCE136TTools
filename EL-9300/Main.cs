@@ -550,7 +550,6 @@ namespace Sharp.EL9300 {
 			ShowEditor(new ProgramEditor());
 		}
 
-
 		private void NewMatrixToolStripMenuItem_Click(object sender, EventArgs e) {
 			ShowEditor(new MatrixEditor());
 		}
@@ -560,7 +559,7 @@ namespace Sharp.EL9300 {
 		}
 
 		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
-			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1l;*.g1m)|*.g1p;*.g1l;*.g1m|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Statistics Data (*.g1l)|*.g1l|EL-9300 Matrix (*.g1m)|*.g1m";
+			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1l;*.g1m;*.g1e)|*.g1p;*.g1l;*.g1m;*.g1e|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Statistics Data (*.g1l)|*.g1l|EL-9300 Matrix (*.g1m)|*.g1m|EL-9300 Solver Equation (*.g1e)|*.g1e";
 			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
 				try {
 
@@ -579,6 +578,9 @@ namespace Sharp.EL9300 {
 							break;
 						case 2: // Program
 							editor = new ProgramEditor { FileName = openFileDialog.FileName };
+							break;
+						case 3: // Solver equation
+							editor = new SolverEquationEditor { FileName = openFileDialog.FileName };
 							break;
 					}
 

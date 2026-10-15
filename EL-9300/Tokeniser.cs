@@ -94,7 +94,7 @@ namespace Sharp.EL9300 {
 
 		}
 
-		static string GetString(byte[] data, int index, int length) {
+		public static string GetString(byte[] data, int index, int length) {
 
 			StringBuilder line = null;
 
