@@ -207,8 +207,8 @@ namespace Sharp.EL9300 {
 
 							// Draw |lines| around expression
 							if (draw) {
-								graphics.DrawLine(Pens.Black, absBounds.Left + ex.Width / 4, absBounds.Top, absBounds.Left + ex.Width / 4, absBounds.Bottom);
-								graphics.DrawLine(Pens.Black, absBounds.Right - ex.Width / 4, absBounds.Top, absBounds.Right - ex.Width / 4, absBounds.Bottom);
+								graphics.DrawLine(Pens.Black, absBounds.Left + ex.Width / 4, absBounds.Top + ex.Height / 6, absBounds.Left + ex.Width / 4, absBounds.Bottom - ex.Height / 6);
+								graphics.DrawLine(Pens.Black, absBounds.Right - ex.Width / 4, absBounds.Top + ex.Height / 6, absBounds.Right - ex.Width / 4, absBounds.Bottom - ex.Height / 6);
 							}
 
 							// Advance bounds
