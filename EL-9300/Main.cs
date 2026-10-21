@@ -17,6 +17,10 @@ namespace Sharp.EL9300 {
 			InitializeComponent();
 		}
 
+		public Main(string[] args) : this() {
+			OpenFiles(args);
+		}
+
 		private void Main_Shown(object sender, System.EventArgs e) {
 			// By default, open the serial port specified in the settings.
 			SwitchOnInterface();
@@ -558,50 +562,61 @@ namespace Sharp.EL9300 {
 			ShowEditor(new StatisticsDataEditor());
 		}
 
+		private void OpenFile(string fileName) {
+			try {
+
+				var linkTransfer = new LinkTransfer(fileName);
+
+				IEditorForm editor = null;
+
+				switch (linkTransfer.Head[0x00]) {
+					case 0: // Matrix
+						if (linkTransfer.Head[0x11] == 0x40) {
+							// Matrix named '@' is statistics data
+							editor = new StatisticsDataEditor();
+						} else {
+							editor = new MatrixEditor();
+						}
+						break;
+					case 2: // Program
+						editor = new ProgramEditor();
+						break;
+					case 3: // Solver equation
+						editor = new SolverEquationEditor();
+						break;
+				}
+
+				if (editor == null) {
+					throw new NotSupportedException("Unsupported file type.");
+				} else if (editor is Form editorForm) {
+					try {
+						editor.Open(linkTransfer);
+						editor.FileName = fileName;
+						editor.Dirty = false;
+					} catch {
+						editorForm.Dispose();
+						throw;
+					}
+					ShowEditor(editorForm);
+				} else {
+					throw new NotSupportedException("File type editor can't be displayed.");
+				}
+
+			} catch (Exception ex) {
+				MessageBox.Show(this, "Could not open '" + Path.GetFileName(fileName) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			}
+		}
+
+		private void OpenFiles(string[] fileNames) {
+			foreach (var fileName in fileNames) {
+				OpenFile(fileName);
+			}
+		}
+
 		private void OpenToolStripMenuItem_Click(object sender, EventArgs e) {
 			openFileDialog.Filter = "EL-9300 Files (*.g1p;*.g1l;*.g1m;*.g1e)|*.g1p;*.g1l;*.g1m;*.g1e|EL-9300 Program (*.g1p)|*.g1p|EL-9300 Statistics Data (*.g1l)|*.g1l|EL-9300 Matrix (*.g1m)|*.g1m|EL-9300 Solver Equation (*.g1e)|*.g1e";
 			if (openFileDialog.ShowDialog(this) == DialogResult.OK) {
-				try {
-
-					var linkTransfer = new LinkTransfer(openFileDialog.FileName);
-
-					IEditorForm editor = null;
-
-					switch (linkTransfer.Head[0x00]) {
-						case 0: // Matrix
-							if (linkTransfer.Head[0x11] == 0x40) {
-								// Matrix named '@' is statistics data
-								editor = new StatisticsDataEditor { FileName = openFileDialog.FileName };
-							} else {
-								editor = new MatrixEditor { FileName = openFileDialog.FileName };
-							}
-							break;
-						case 2: // Program
-							editor = new ProgramEditor { FileName = openFileDialog.FileName };
-							break;
-						case 3: // Solver equation
-							editor = new SolverEquationEditor { FileName = openFileDialog.FileName };
-							break;
-					}
-
-					if (editor == null) {
-						throw new NotSupportedException("Unsupported file type.");
-					} else if (editor is Form editorForm) {
-						try {
-							editor.Open(linkTransfer);
-							editor.Dirty = false;
-						} catch {
-							editorForm.Dispose();
-							throw;
-						}
-						ShowEditor(editorForm);
-					} else {
-						throw new NotSupportedException("File type editor can't be displayed.");
-					}
-
-				} catch (Exception ex) {
-					MessageBox.Show(this, "Could not open '" + Path.GetFileName(openFileDialog.FileName) + "': " + ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-				}
+				OpenFile(openFileDialog.FileName);
 			}
 		}
 
