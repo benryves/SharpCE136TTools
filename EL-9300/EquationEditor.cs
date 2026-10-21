@@ -154,13 +154,13 @@ namespace Sharp.EL9300 {
 							// Moved into the subexpression
 							++index;
 
-							// Measure the abs argument
+							// Measure the root argument
 							var rootEquationIndex = index;
 							var rootBounds = Draw(graphics, origin, ref index, false);
 
 							// Allow an extra ex width for the root symbol
+							origin.X += ex.Width * 3 / 4;
 							rootBounds.Width += ex.Width;
-							origin.X += ex.Width / 2;
 
 							// Reset and draw
 							index = rootEquationIndex;
@@ -168,10 +168,17 @@ namespace Sharp.EL9300 {
 
 							// Draw lines around expression
 							if (draw) {
-								graphics.DrawLine(Pens.Black, rootBounds.Left, rootBounds.Bottom - ex.Width / 4, rootBounds.Left + ex.Width / 4, rootBounds.Bottom);
-								graphics.DrawLine(Pens.Black, rootBounds.Left + ex.Width / 4, rootBounds.Top, rootBounds.Left + ex.Width / 4, rootBounds.Bottom);
-								graphics.DrawLine(Pens.Black, rootBounds.Left + ex.Width / 4, rootBounds.Top, rootBounds.Right - ex.Width / 4, rootBounds.Top);
+								graphics.DrawLines(Pens.Black, new[] {
+									new PointF(rootBounds.Left, rootBounds.Bottom - ex.Width / 4),
+									new PointF(rootBounds.Left + ex.Width / 4, rootBounds.Bottom),
+									new PointF(rootBounds.Left + ex.Width / 4, rootBounds.Y),
+									new PointF(rootBounds.Right, rootBounds.Y),
+								});
 							}
+
+							// Allow an extra half ex height
+							rootBounds.Height += ex.Height / 2;
+							rootBounds.Y -= ex.Height / 4;
 
 							// Advance bounds
 							lastBounds = rootBounds;
