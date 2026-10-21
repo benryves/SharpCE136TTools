@@ -55,19 +55,19 @@ namespace Sharp.EL9300 {
 
 									// What's the total bounding size of the fraction?
 									var fractionSize = new SizeF(Math.Max(beforeEquation.Width, afterEquation.Width) + ex.Width * 2, beforeEquation.Height + afterEquation.Height);
-									var fractionBounds = new RectangleF(origin.X, origin.Y - beforeEquation.Height + ex.Height / 2, fractionSize.Width, fractionSize.Height);
+									var fractionBounds = new RectangleF(origin.X, origin.Y - beforeEquation.Height, fractionSize.Width, fractionSize.Height);
 
 									// Redraw the numerator
 									index = beforeEquationIndex;
-									Draw(graphics, new PointF(origin.X + (fractionSize.Width - beforeEquation.Width) / 2, origin.Y - beforeEquation.Height / 2), ref index, draw);
+									Draw(graphics, new PointF(origin.X + (fractionSize.Width - beforeEquation.Width) / 2, origin.Y + (origin.Y - beforeEquation.Bottom)), ref index, draw);
 
 									// Redraw the denominator
 									index = afterEquationIndex;
-									Draw(graphics, new PointF(origin.X + (fractionSize.Width - afterEquation.Width) / 2, origin.Y + afterEquation.Height / 2), ref index, draw);
+									Draw(graphics, new PointF(origin.X + (fractionSize.Width - afterEquation.Width) / 2, origin.Y + (origin.Y - afterEquation.Top)), ref index, draw);
 
 									// Draw the fraction line
 									if (draw) {
-										graphics.DrawLine(Pens.Black, origin.X + ex.Width / 4, origin.Y + ex.Height / 2, origin.X + fractionSize.Width - ex.Width / 2, origin.Y + ex.Height / 2);
+										graphics.DrawLine(Pens.Black, origin.X + ex.Width / 4, origin.Y, origin.X + fractionSize.Width - ex.Width / 2, origin.Y);
 									}
 
 									// Modify the total bounds and advance the origin
@@ -214,10 +214,10 @@ namespace Sharp.EL9300 {
 
 						var detokenised = Symbols.FromPlainText(Tokeniser.GetString(equation, index - 1, 1));
 						var detokenisedSize = graphics.MeasureString(detokenised, Font, 0, StringFormat.GenericTypographic);
-						var detokenisedBounds = new RectangleF(origin, detokenisedSize);
+						var detokenisedBounds = new RectangleF(origin.X, origin.Y - detokenisedSize.Height / 2, detokenisedSize.Width, detokenisedSize.Height);
 
 						if (draw) {
-							graphics.DrawString(detokenised, Font, Brushes.Black, origin, StringFormat.GenericTypographic);
+							graphics.DrawString(detokenised, Font, Brushes.Black, origin.X, origin.Y - detokenisedSize.Height / 2, StringFormat.GenericTypographic);
 						}
 
 						lastBounds = detokenisedBounds;
