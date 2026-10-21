@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using static System.Windows.Forms.LinkLabel;
 
 namespace Sharp.EL9300 {
-	
+
+	public enum SolverEquationMode : byte {
+		OneLineEditor = 0x00,
+		EquationEditor = 0x01,
+	}
+
 	public class SolverEquationVariable {
 
 		private string name;
@@ -20,7 +24,7 @@ namespace Sharp.EL9300 {
 			}
 		}
 
-		public byte Mode {
+		public SolverEquationMode Mode {
 			get; set;
 		}
 
@@ -41,7 +45,7 @@ namespace Sharp.EL9300 {
 			}
 		}
 
-		public SolverEquationVariable(string name, byte mode, byte[] equation) {
+		public SolverEquationVariable(string name, SolverEquationMode mode, byte[] equation) {
 			Name = name;
 			Mode = mode;
 			Equation = equation;
@@ -70,7 +74,7 @@ namespace Sharp.EL9300 {
 			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
 
 			var equationName = reader.ReadBytes(16);
-			var equationMode = reader.ReadByte();
+			var equationMode = (SolverEquationMode)reader.ReadByte();
 			reader.ReadUInt16(); // Program size
 
 			if (reader.ReadByte() != 0x00) throw new InvalidDataException();
