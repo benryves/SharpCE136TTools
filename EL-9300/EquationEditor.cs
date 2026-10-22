@@ -97,8 +97,11 @@ namespace Sharp.EL9300 {
 
 									// How far do we need to raise the equation before the root sign?
 
-									// Align the origin with the top of the after equation (before adding its margin)
-									var raiseTheRoot = afterEquation.Top - origin.Y;
+									// Align the origin of before with the top of the after equation,
+									// or the bottom of before with origin of after, whichever is higher (smaller Y)
+									var raiseTheRoot = Math.Min(afterEquation.Top - origin.Y, origin.Y - beforeEquation.Bottom);
+
+									// Reposition the before equation
 									beforeEquation.Y += raiseTheRoot;
 
 									// The root's contents needs some extra space above and below for the root sign
