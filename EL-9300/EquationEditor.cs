@@ -85,10 +85,7 @@ namespace Sharp.EL9300 {
 									var afterEquationIndex = index;
 									var afterEquation = Draw(graphics, new PointF(origin.X + beforeEquation.Width + ex.Width / 2, origin.Y), ref index, false);
 
-									// What's the total bounding size of the root?
-									var rootSize = new SizeF(beforeEquation.Width + ex.Width + afterEquation.Width, Math.Max(beforeEquation.Height, afterEquation.Height) + ex.Height / 2);
-									var rootBounds = new RectangleF(origin.X, Math.Min(beforeEquation.Top, afterEquation.Top) - ex.Height / 4, rootSize.Width, rootSize.Height);
-
+									// Draw the lines around the root's contents before adjusting them
 									if (draw) {
 										graphics.DrawLines(Pens.Black, new[] {
 											new PointF(afterEquation.Left - ex.Width / 2, afterEquation.Bottom - ex.Width / 4),
@@ -98,13 +95,27 @@ namespace Sharp.EL9300 {
 										});
 									}
 
+									// How far do we need to raise the equation before the root sign?
+
+									// Align the origin with the top of the after equation (before adding its margin)
+									var raiseTheRoot = afterEquation.Top - origin.Y;
+									beforeEquation.Y += raiseTheRoot;
+
+									// The root's contents needs some extra space above and below for the root sign
+									afterEquation.Y -= ex.Height / 4;
+									afterEquation.Height += ex.Height / 2;
+									afterEquation.Width += ex.Width / 2;
+
 									// Redraw before the root
 									index = beforeEquationIndex;
-									Draw(graphics, new PointF(origin.X, origin.Y), ref index, draw);
+									Draw(graphics, new PointF(beforeEquation.X, origin.Y + raiseTheRoot), ref index, draw);
 
 									// Redraw after the root
 									index = afterEquationIndex;
-									Draw(graphics, new PointF(origin.X + beforeEquation.Width + ex.Width / 2, origin.Y), ref index, draw);
+									Draw(graphics, new PointF(afterEquation.X, origin.Y), ref index, draw);
+
+									// Compute the outer root bounds
+									var rootBounds = RectangleF.Union(beforeEquation, afterEquation);
 
 									// Modify the total bounds and advance the origin
 									lastBounds = rootBounds;
