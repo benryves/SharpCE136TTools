@@ -318,7 +318,7 @@ namespace Sharp.CE50P {
 							Invoke(new MethodInvoker(PrinterPrintingRow));
 							// Fetch row data
 							var row = paBusReader.ReadBytes(columns);
-							//if (row.Length != columns) throw new TimeoutException("Could not read full row of printer data.");
+							if (row.Length != columns) throw new TimeoutException("Could not read full row of printer data.");
 							// Report that a row has been printed
 							Invoke(new Action<byte[]>(PrinterPrintedRow), row);
 							// Acknowledge
