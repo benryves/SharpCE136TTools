@@ -286,18 +286,39 @@ namespace Sharp.CE50P {
 							if (value == 0xA5) paBusStream.Flush();
 							break;
 						case 0xC0:
-							Debug.WriteLine("<- 0xC0 [Printer Init]");
+							Debug.WriteLine("<- 0xC0 [Printer init]");
 							// Report that a print job has been started
 							Invoke(new MethodInvoker(PrinterStartedJob));
 							// Acknowledge
 							paBusStream.WriteAcknowledgement();
 							paBusStream.Flush();
 							break;
+						case 0xC1:
+							Debug.WriteLine("<- 0xC1 [Printer de-init]");
+							Invoke(new MethodInvoker(PrinterFinishedJob));
+							// Acknowledge
+							paBusStream.WriteAcknowledgement();
+							paBusStream.Flush();
+							break;
+						case 0x58:
 						case 0x59:
-							Debug.WriteLine("<- 0x59 [Printer row]");
+							// How many columns are there in the row?
+							var columns = -1;
+							switch (value) {
+								case 0x58:
+									columns = 96;
+									break;
+								case 0x59:
+									columns = 128;
+									break;
+								default:
+									throw new InvalidDataException();
+							}
+							Debug.WriteLine(string.Format("<- 0x{0:X} [Printer row {1}]", value, columns));
 							Invoke(new MethodInvoker(PrinterPrintingRow));
-							// Fetch 128 bytes of row data
-							var row = paBusReader.ReadBytes(128);
+							// Fetch row data
+							var row = paBusReader.ReadBytes(columns);
+							//if (row.Length != columns) throw new TimeoutException("Could not read full row of printer data.");
 							// Report that a row has been printed
 							Invoke(new Action<byte[]>(PrinterPrintedRow), row);
 							// Acknowledge
@@ -452,7 +473,7 @@ namespace Sharp.CE50P {
 					var top = r * 8;
 					for (int x = 0; x < 128; ++x) {
 						for (int y = 0, mask = 0x80; y < 8; ++y, mask >>= 1) {
-							var c = (printerRows[r][x] & mask) != 0 ? Color.Black : Color.White;
+							var c = x < printerRows[r].Length && (printerRows[r][x] & mask) != 0 ? Color.Black : Color.White;
 							printBmp.SetPixel(x, y + top, c);
 						}
 					}
