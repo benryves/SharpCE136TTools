@@ -127,7 +127,16 @@ namespace Sharp.EL9300 {
 								}
 								break;
 							default:
-								throw new NotImplementedException();
+								// Generic sub-expression, so render in one go
+								if (draw) {
+									index = beforeEquationIndex;
+									Draw(graphics, origin, ref index, true);
+								}
+								// Modify the total bounds and advance the origin
+								bounds = RectangleF.Union(bounds, beforeEquation);
+								lastBounds = beforeEquation;
+								origin.X += beforeEquation.Width;
+								break;
 						}
 						break;
 					case 0x3D: // End sub-equation
