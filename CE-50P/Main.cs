@@ -1,4 +1,5 @@
 ﻿using Sharp.CE136T;
+using Sharp.CE50P.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -299,6 +300,26 @@ namespace Sharp.CE50P {
 							// Acknowledge
 							paBusStream.WriteAcknowledgement();
 							paBusStream.Flush();
+							break;
+						case 0x51:
+							Debug.WriteLine("<- 0x51 [Printer data]");
+							Invoke(new MethodInvoker(PrinterPrintingRow));
+							// Read the line to print
+							List<byte> lineToPrint = new List<byte>();
+							for (; ; ) {
+								var b = paBusReader.ReadByte();
+								if (b == 0x0D) break;
+								lineToPrint.Add(b);
+							}
+							// Rasterise
+							var rasterisedLine = new byte[6 * lineToPrint.Count];
+							for (int i = 0; i < lineToPrint.Count; ++i) {
+								Array.Copy(Resources.DataFont, lineToPrint[i] * 6, rasterisedLine, i * 6, 6);
+							}
+							// Report the printed line
+							Invoke(new Action<byte[]>(PrinterPrintedRow), rasterisedLine);
+							// Acknowledge
+							paBusStream.WriteAcknowledgement();
 							break;
 						case 0x58:
 						case 0x59:

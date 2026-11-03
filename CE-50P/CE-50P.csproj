@@ -113,6 +113,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\font.bin" />
     <None Include="Resources\printer.png" />
   </ItemGroup>
   <ItemGroup>
