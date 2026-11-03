@@ -144,9 +144,25 @@ namespace Sharp.EL9300 {
 					case 0xFF: // End of equation
 						goto finished;
 					case 0x89: // ^power
+					case 0x92: // 10^
+					case 0x93: // e^
 						if (equation[index] != 0x3C) {
 							goto default;
 						} else {
+
+							// Draw the base of the power
+							var powerBase = Tokeniser.GetString(equation, index - 1, 1).TrimEnd('^');
+							if (powerBase.Length > 0) {
+								var powerBaseSize = graphics.MeasureString(powerBase, Font, 0, StringFormat.GenericTypographic);
+								var powerBaseBounds = new RectangleF(origin.X, origin.Y - powerBaseSize.Height / 2, powerBaseSize.Width, powerBaseSize.Height);
+								if (draw) {
+									graphics.DrawString(powerBase, Font, Brushes.Black, origin.X, origin.Y - powerBaseSize.Height / 2, StringFormat.GenericTypographic);
+								}
+								// Advance bounds
+								origin.X += powerBaseBounds.Width;
+								bounds = RectangleF.Union(bounds, powerBaseBounds);
+							}
+
 							// Moved into the subexpression
 							++index;
 
