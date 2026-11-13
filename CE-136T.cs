@@ -129,6 +129,11 @@ namespace Sharp.CE136T {
 		public void WriteAcknowledgement() {
 			WriteByte(0xFA);
 		}
+		
+		public void WriteError() {
+			WriteByte(0xF0);
+		}
+
 
 		#endregion
 

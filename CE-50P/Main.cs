@@ -302,44 +302,77 @@ namespace Sharp.CE50P {
 							paBusStream.Flush();
 							break;
 						case 0x51:
-							Debug.WriteLine("<- 0x51 [Printer data]");
-							Invoke(new MethodInvoker(PrinterPrintingRow));
-							// Read the line to print
-							List<byte> lineToPrint = new List<byte>();
-							for (; ; ) {
-								var b = paBusReader.ReadByte();
-								if (b == 0x0D) break;
-								lineToPrint.Add(b);
-							}
-							// Rasterise
-							var rasterisedLine = new byte[6 * lineToPrint.Count];
-							for (int i = 0; i < lineToPrint.Count; ++i) {
-								Array.Copy(Resources.DataFont, lineToPrint[i] * 6, rasterisedLine, i * 6, 6);
-							}
-							// Report the printed line
-							Invoke(new Action<byte[]>(PrinterPrintedRow), rasterisedLine);
-							// Acknowledge
-							paBusStream.WriteAcknowledgement();
-							break;
-						case 0x58:
-						case 0x59:
+						case 0x52:
+						case 0x53:
 							// How many columns are there in the row?
-							var columns = -1;
+							var textColumns = -1;
 							switch (value) {
-								case 0x58:
-									columns = 96;
+								case 0x51:
+									textColumns = 16;
 									break;
-								case 0x59:
-									columns = 128;
+								case 0x52:
+								case 0x53:
+									textColumns = 21;
 									break;
 								default:
 									throw new InvalidDataException();
 							}
-							Debug.WriteLine(string.Format("<- 0x{0:X} [Printer row {1}]", value, columns));
+							Debug.WriteLine(string.Format("<- 0x{0:X2} [Printer text, up to {1} characters]", value, textColumns));
+							Invoke(new MethodInvoker(PrinterPrintingRow));
+							// Read the line to print
+							var lineToPrint = new List<byte>();
+							var lineEnded = false;
+							for (; lineToPrint.Count <= textColumns;) {
+								var b = paBusReader.ReadByte();
+								if (b == 0x0D) {
+									lineEnded = true;
+									break;
+								}
+								lineToPrint.Add(b);
+							}
+							if (!lineEnded) {
+								// Flush to the end of the data
+								for (; ; ) {
+									var i = paBusReader.Read();
+									if (i == 0x0D) {
+										paBusStream.WriteError();
+										break;
+									} else if (i < 0) {
+										break;
+									}
+								}
+								Invoke(new Action<byte[]>(PrinterPrintedRow), (byte[])null);
+							} else {
+								// Rasterise
+								var rasterisedLine = new byte[6 * lineToPrint.Count];
+								for (int i = 0; i < lineToPrint.Count; ++i) {
+									Array.Copy(Resources.DataFont, lineToPrint[i] * 6, rasterisedLine, i * 6, 6);
+								}
+								// Report the printed line
+								Invoke(new Action<byte[]>(PrinterPrintedRow), rasterisedLine);
+								// Acknowledge
+								paBusStream.WriteAcknowledgement();
+							}
+							break;
+						case 0x58:
+						case 0x59:
+							// How many columns are there in the row?
+							var graphicsColumns = -1;
+							switch (value) {
+								case 0x58:
+									graphicsColumns = 96;
+									break;
+								case 0x59:
+									graphicsColumns = 128;
+									break;
+								default:
+									throw new InvalidDataException();
+							}
+							Debug.WriteLine(string.Format("<- 0x{0:X} [Printer graphics, {1} pixel columns]", value, graphicsColumns));
 							Invoke(new MethodInvoker(PrinterPrintingRow));
 							// Fetch row data
-							var row = paBusReader.ReadBytes(columns);
-							if (row.Length != columns) throw new TimeoutException("Could not read full row of printer data.");
+							var row = paBusReader.ReadBytes(graphicsColumns);
+							if (row.Length != graphicsColumns) throw new TimeoutException("Could not read full row of printer data.");
 							// Report that a row has been printed
 							Invoke(new Action<byte[]>(PrinterPrintedRow), row);
 							// Acknowledge
@@ -481,7 +514,7 @@ namespace Sharp.CE50P {
 		private void PrinterPrintedRow(byte[] data) {
 			isPrinting = true;
 			isPlaying = isRecording = false;
-			printerRows.Add(data);
+			if (data != null) printerRows.Add(data);
 			UpdateStatus();
 			if (Properties.Settings.Default.PrintImmediately) PrinterFinishedJob();
 		}
